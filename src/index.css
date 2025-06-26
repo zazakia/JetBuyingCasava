@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base body styling with gradient background */
+body {
+  @apply bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-900 min-h-screen;
+  background-attachment: fixed;
+}
+
+/* Glass morphism styles */
+.glass {
+  @apply bg-white/10 backdrop-blur-md border border-white/20;
+}
+
+.glass-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+.glass-nav {
+  @apply bg-white/5 backdrop-blur-xl border-r border-white/20 shadow-2xl;
+}
+
+.glass-modal {
+  @apply bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl;
+}
+
+.glass-input {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/60;
+}
+
+.glass-input:focus {
+  @apply bg-white/15 border-emerald-400/50;
+}
+
+.glass-button {
+  @apply bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl;
+}
+
+.text-glass {
+  @apply text-white;
+}
+
+.text-glass-muted {
+  @apply text-white/70;
+}
+
+.text-glass-light {
+  @apply text-white/50;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Glow animation */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-white/5;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/30;
+}
+
+/* Form select styling */
+select.glass-input {
+  @apply bg-white/10 text-white;
+}
+
+select.glass-input option {
+  @apply bg-gray-800 text-white;
+}
+
+/* Chart container styling */
+.chart-container {
+  @apply bg-white/5 rounded-lg p-4;
+}
