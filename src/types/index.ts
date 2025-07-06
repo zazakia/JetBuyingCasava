@@ -88,3 +88,120 @@ export interface SupabaseConfig {
   apiKey: string;
   isConfigured: boolean;
 }
+
+// New types for database integration
+export interface DatabaseRecord {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+}
+
+export interface LoadingState {
+  isLoading: boolean;
+  error: string | null;
+  lastUpdated: string | null;
+}
+
+export interface OfflineAction {
+  id: string;
+  type: 'CREATE' | 'UPDATE' | 'DELETE';
+  table: 'farmers' | 'lands' | 'crops' | 'transactions';
+  data: any;
+  timestamp: string;
+  synced: boolean;
+}
+
+export interface SyncLogEntry {
+  id: string;
+  table_name: string;
+  record_id: string;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  data: any;
+  synced: boolean;
+  created_at: string;
+  user_id: string;
+}
+
+// Database table interfaces (snake_case for Supabase)
+export interface FarmerDB extends DatabaseRecord {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  address: string;
+  barangay: string;
+  municipality: string;
+  province: string;
+  total_hectares: number;
+  date_planted?: string;
+  date_harvested?: string;
+  date_registered: string;
+  is_active: boolean;
+  profile_picture?: string;
+}
+
+export interface LandDB extends DatabaseRecord {
+  farmer_id: string;
+  name: string;
+  area: number;
+  location: string;
+  barangay: string;
+  municipality: string;
+  province: string;
+  soil_type: string;
+  coordinates?: any;
+  date_acquired: string;
+}
+
+export interface CropDB extends DatabaseRecord {
+  land_id: string;
+  farmer_id: string;
+  crop_type: string;
+  variety: string;
+  planting_date: string;
+  expected_harvest_date: string;
+  actual_harvest_date?: string;
+  area_planted: number;
+  expected_yield: number;
+  actual_yield?: number;
+  status: 'planted' | 'growing' | 'ready' | 'harvested';
+  notes?: string;
+}
+
+export interface TransactionDB extends DatabaseRecord {
+  farmer_id: string;
+  crop_id?: string;
+  type: 'purchase' | 'sale';
+  buyer_seller: string;
+  produce: string;
+  quantity: number;
+  price_per_kg: number;
+  total_amount: number;
+  transaction_date: string;
+  payment_status: 'pending' | 'partial' | 'paid';
+  delivery_status: 'pending' | 'delivered';
+  notes?: string;
+}
+
+// API Response types
+export interface ApiResponse<T> {
+  data: T | null;
+  error: string | null;
+  loading: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  count: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+// Sync and offline types
+export interface SyncResult {
+  success: boolean;
+  synced: number;
+  failed: number;
+  errors: string[];
+}

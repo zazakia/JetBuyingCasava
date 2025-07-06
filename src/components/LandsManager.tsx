@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit2, MapPin, Calendar, Ruler } from 'lucide-react';
-import type { Land, Farmer } from '../types';
+import type { Land, Farmer, LoadingState } from '../types';
 
 interface LandsManagerProps {
   lands: Land[];
   farmers: Farmer[];
   onAddLand: (land: Land) => void;
+  loading?: LoadingState;
 }
 
 export function LandsManager({ lands, farmers, onAddLand }: LandsManagerProps) {

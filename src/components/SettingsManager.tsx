@@ -4,13 +4,17 @@ import {
   getSupabaseConfig, 
   saveSupabaseConfig, 
   clearSupabaseConfig, 
-  testSupabaseConnection,
-  validateSupabaseUrl,
-  validateApiKey,
+  testConnection,
+  isValidSupabaseUrl,
+  isValidApiKey,
   type SupabaseConfig 
 } from '../utils/supabase';
 
-export function SettingsManager() {
+interface SettingsManagerProps {
+  onConfigChange?: () => void;
+}
+
+export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
   const [activeSection, setActiveSection] = useState('profile');
   const [settings, setSettings] = useState({
     profile: {
@@ -99,7 +103,7 @@ export function SettingsManager() {
     }
 
     // Validate URL format
-    if (!validateSupabaseUrl(supabaseConfig.url)) {
+    if (!isValidSupabaseUrl(supabaseConfig.url)) {
       setConnectionStatus({
         status: 'error',
         message: 'Invalid Supabase URL format'
@@ -108,7 +112,7 @@ export function SettingsManager() {
     }
 
     // Validate API key format
-    if (!validateApiKey(supabaseConfig.apiKey)) {
+    if (!isValidApiKey(supabaseConfig.apiKey)) {
       setConnectionStatus({
         status: 'error',
         message: 'Invalid API key format'
@@ -125,7 +129,7 @@ export function SettingsManager() {
         apiKey: supabaseConfig.apiKey
       });
 
-      const result = await testSupabaseConnection();
+      const result = await testConnection();
       setConnectionStatus({
         status: result.success ? 'success' : 'error',
         message: result.message
@@ -134,6 +138,8 @@ export function SettingsManager() {
       if (result.success) {
         // Update local state to reflect successful configuration
         setSupabaseConfig(prev => ({ ...prev, isConfigured: true }));
+        // Notify parent component of configuration change
+        onConfigChange?.();
       }
     } catch (error) {
       setConnectionStatus({
@@ -158,6 +164,8 @@ export function SettingsManager() {
       
       alert('Supabase configuration saved successfully!');
       setSupabaseConfig(prev => ({ ...prev, isConfigured: true }));
+      // Notify parent component of configuration change
+      onConfigChange?.();
     } catch (error) {
       alert('Failed to save Supabase configuration');
     } finally {
@@ -175,6 +183,8 @@ export function SettingsManager() {
       });
       setConnectionStatus({ status: 'idle', message: '' });
       alert('Supabase configuration cleared');
+      // Notify parent component of configuration change
+      onConfigChange?.();
     }
   };
 

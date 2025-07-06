@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit2, Calendar, MapPin, TrendingUp, Sprout } from 'lucide-react';
-import type { Crop, Farmer, Land } from '../types';
+import type { Crop, Farmer, Land, LoadingState } from '../types';
 
 interface CropsManagerProps {
   crops: Crop[];
@@ -8,6 +8,7 @@ interface CropsManagerProps {
   lands: Land[];
   onAddCrop: (crop: Crop) => void;
   onUpdateCrop: (crop: Crop) => void;
+  loading?: LoadingState;
 }
 
 export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }: CropsManagerProps) {
@@ -32,7 +33,6 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
   });
 
   const barangays = [...new Set(farmers.map(f => f.barangay))].sort();
-  const cropTypes = [...new Set(crops.map(c => c.cropType))].sort();
 
   const filteredCrops = crops.filter(crop => {
     const farmer = farmers.find(f => f.id === crop.farmerId);
@@ -179,7 +179,6 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredCrops.map(crop => {
           const farmer = farmers.find(f => f.id === crop.farmerId);
-          const land = lands.find(l => l.id === crop.landId);
           
           return (
             <div key={crop.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">

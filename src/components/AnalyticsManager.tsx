@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, BarChart3, PieChart, Target, Calendar } from 'lucide-react';
-import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2';
+import { TrendingUp, TrendingDown, BarChart3, Target, Calendar } from 'lucide-react';
+import { Line, Scatter } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
 interface AnalyticsManagerProps {

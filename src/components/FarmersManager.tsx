@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Phone, MapPin, Calendar, User } from 'lucide-react';
-import type { Farmer } from '../types';
+import { Plus, Search, Edit2, Phone, MapPin, Calendar, User, Loader } from 'lucide-react';
+import type { Farmer, LoadingState } from '../types';
 
 interface FarmersManagerProps {
   farmers: Farmer[];
   onAddFarmer: (farmer: Farmer) => void;
   onUpdateFarmer: (farmer: Farmer) => void;
+  loading?: LoadingState;
 }
 
-export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer }: FarmersManagerProps) {
+export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer, loading }: FarmersManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBarangay, setFilterBarangay] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -133,6 +134,21 @@ export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer }: Farmers
           </select>
         </div>
       </div>
+
+      {/* Loading State */}
+      {loading?.isLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader className="w-6 h-6 animate-spin text-glass-muted mr-2" />
+          <span className="text-glass-muted">Loading farmers...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {loading?.error && (
+        <div className="glass-card rounded-xl p-4 border border-red-400/30 bg-red-500/10 mb-6">
+          <p className="text-red-300 text-sm">{loading.error}</p>
+        </div>
+      )}
 
       {/* Farmers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">

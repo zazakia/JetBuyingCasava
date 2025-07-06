@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Users, MapPin, Sprout, TrendingUp, DollarSign, Calendar } from 'lucide-react';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
 interface DashboardProps {
@@ -74,16 +74,17 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
     };
   }, [crops, farmers]);
 
-  const StatCard = ({ title, value, subtitle, icon: Icon, color }: any) => (
-    <div className="glass-card rounded-xl p-4 lg:p-6 hover:bg-white/20 transition-all duration-300">
+  const StatCard = ({ title, value, subtitle, icon: Icon, color, emoji }: any) => (
+    <div className="glass-card rounded-xl p-4 lg:p-6 hover:bg-amber-900/25 transition-all duration-300 animate-float">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-glass-muted mb-1">{title}</p>
           <p className="text-xl lg:text-2xl font-bold text-glass">{value}</p>
           {subtitle && <p className="text-xs lg:text-sm text-glass-light mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-10 h-10 lg:w-12 lg:h-12 ${color} rounded-lg flex items-center justify-center animate-glow`}>
+        <div className={`w-10 h-10 lg:w-12 lg:h-12 ${color} rounded-lg flex items-center justify-center animate-glow relative`}>
           <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+          <span className="absolute -top-1 -right-1 text-lg animate-sprout">{emoji}</span>
         </div>
       </div>
     </div>
@@ -92,8 +93,15 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
   return (
     <div className="p-4 lg:p-6 min-h-screen">
       <div className="mb-6 lg:mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold text-glass mb-2">Dashboard</h1>
-        <p className="text-glass-muted text-sm lg:text-base">Overview of your farming operations</p>
+        <div className="flex items-center space-x-3 mb-2">
+          <span className="text-3xl lg:text-4xl animate-float">🌾</span>
+          <h1 className="text-2xl lg:text-3xl font-bold text-glass">AgriTracker Dashboard</h1>
+          <span className="text-2xl lg:text-3xl animate-sprout">🚜</span>
+        </div>
+        <p className="text-glass-muted text-sm lg:text-base flex items-center">
+          <span className="mr-2">🌱</span>
+          Complete overview of your farming operations and crop management
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -103,57 +111,71 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
           value={stats.totalFarmers}
           subtitle={`${stats.activeFarmers} active`}
           icon={Users}
-          color="bg-gradient-to-br from-emerald-500 to-teal-600"
+          color="bg-gradient-to-br from-amber-600 to-orange-700"
+          emoji="👨‍🌾"
         />
         <StatCard
           title="Total Lands"
           value={stats.totalLands}
           subtitle={`${stats.totalArea.toFixed(1)} hectares`}
           icon={MapPin}
-          color="bg-gradient-to-br from-blue-500 to-indigo-600"
+          color="bg-gradient-to-br from-green-600 to-emerald-700"
+          emoji="🏞️"
         />
         <StatCard
           title="Active Crops"
           value={stats.totalCrops}
           subtitle={`${stats.harvestedCrops} harvested`}
           icon={Sprout}
-          color="bg-gradient-to-br from-green-500 to-emerald-600"
+          color="bg-gradient-to-br from-emerald-500 to-green-600"
+          emoji="🌱"
         />
         <StatCard
           title="Total Revenue"
           value={`₱${stats.totalRevenue.toLocaleString()}`}
           subtitle={`${stats.totalHarvest.toLocaleString()} kg harvested`}
           icon={DollarSign}
-          color="bg-gradient-to-br from-purple-500 to-pink-600"
+          color="bg-gradient-to-br from-yellow-600 to-amber-700"
+          emoji="💰"
         />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Crop Status Chart */}
-        <div className="glass-card rounded-xl p-4 lg:p-6">
-          <h3 className="text-lg font-semibold text-glass mb-4">Crop Status Distribution</h3>
-          <div className="h-64">
+        {/* Crop Growth Status Chart */}
+        <div className="glass-card rounded-xl p-4 lg:p-6 plant-chart">
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="text-2xl animate-sprout">🌱</span>
+            <h3 className="text-lg font-semibold text-glass">Crop Growth Distribution</h3>
+          </div>
+          <div className="h-64 animate-plant-grow">
             <Doughnut
               data={{
-                labels: Object.keys(chartData.cropStatusData).map(status => 
-                  status.charAt(0).toUpperCase() + status.slice(1)
-                ),
+                labels: Object.keys(chartData.cropStatusData).map(status => {
+                  const statusMap = {
+                    planted: '🌰 Planted',
+                    growing: '🌿 Growing', 
+                    ready: '🌾 Ready',
+                    harvested: '🚜 Harvested'
+                  };
+                  return statusMap[status as keyof typeof statusMap] || status.charAt(0).toUpperCase() + status.slice(1);
+                }),
                 datasets: [{
                   data: Object.values(chartData.cropStatusData),
                   backgroundColor: [
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(139, 92, 246, 0.8)'
+                    'rgba(217, 119, 6, 0.8)',   // amber for planted
+                    'rgba(34, 197, 94, 0.8)',   // green for growing
+                    'rgba(251, 146, 60, 0.8)',  // orange for ready
+                    'rgba(16, 185, 129, 0.8)'   // emerald for harvested
                   ],
                   borderColor: [
-                    'rgb(16, 185, 129)',
-                    'rgb(59, 130, 246)',
-                    'rgb(245, 158, 11)',
-                    'rgb(139, 92, 246)'
+                    'rgb(217, 119, 6)',
+                    'rgb(34, 197, 94)', 
+                    'rgb(251, 146, 60)',
+                    'rgb(16, 185, 129)'
                   ],
-                  borderWidth: 2
+                  borderWidth: 3,
+                  hoverOffset: 8
                 }]
               }}
               options={{
@@ -162,32 +184,62 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
                 plugins: {
                   legend: {
                     position: 'bottom',
-                    labels: { color: 'white' }
+                    labels: { 
+                      color: 'rgba(255, 248, 220, 0.9)',
+                      font: { size: 12 },
+                      padding: 15
+                    }
                   }
+                },
+                animation: {
+                  animateRotate: true,
+                  animateScale: true,
+                  duration: 2000
                 }
               }}
             />
           </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium status-planted border">
+              🌰 Seeded
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium status-growing border">
+              🌿 Growing
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium status-ready border">
+              🌾 Mature
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium status-harvested border">
+              🚜 Harvested
+            </span>
+          </div>
         </div>
 
-        {/* Monthly Harvest Trend */}
-        <div className="glass-card rounded-xl p-4 lg:p-6">
-          <h3 className="text-lg font-semibold text-glass mb-4">Monthly Harvest Trend</h3>
-          <div className="h-64">
+        {/* Plant Growth Trend */}
+        <div className="glass-card rounded-xl p-4 lg:p-6 plant-chart">
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="text-2xl animate-float">📈</span>
+            <h3 className="text-lg font-semibold text-glass">Harvest Growth Trend</h3>
+            <span className="text-lg animate-sprout">🌾</span>
+          </div>
+          <div className="h-64 animate-plant-grow">
             <Line
               data={{
                 labels: chartData.monthlyHarvest.map(d => d.month),
                 datasets: [{
-                  label: 'Harvest (kg)',
+                  label: '🌾 Harvest Yield (kg)',
                   data: chartData.monthlyHarvest.map(d => d.harvest),
-                  borderColor: 'rgb(16, 185, 129)',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  borderColor: 'rgb(34, 197, 94)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.15)',
                   tension: 0.4,
-                  borderWidth: 3,
-                  pointBackgroundColor: 'rgb(16, 185, 129)',
-                  pointBorderColor: 'white',
-                  pointBorderWidth: 2,
-                  pointRadius: 6
+                  borderWidth: 4,
+                  pointBackgroundColor: 'rgb(34, 197, 94)',
+                  pointBorderColor: 'rgba(255, 248, 220, 0.9)',
+                  pointBorderWidth: 3,
+                  pointRadius: 8,
+                  pointHoverRadius: 12,
+                  fill: true,
+                  pointStyle: 'circle'
                 }]
               }}
               options={{
@@ -195,52 +247,104 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    labels: { color: 'white' }
+                    labels: { 
+                      color: 'rgba(255, 248, 220, 0.9)',
+                      font: { size: 12 },
+                      usePointStyle: true
+                    }
                   }
                 },
                 scales: {
                   x: {
-                    ticks: { color: 'white' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    ticks: { 
+                      color: 'rgba(255, 248, 220, 0.8)',
+                      font: { size: 11 }
+                    },
+                    grid: { 
+                      color: 'rgba(255, 248, 220, 0.1)',
+                      borderColor: 'rgba(255, 248, 220, 0.3)'
+                    }
                   },
                   y: {
                     beginAtZero: true,
-                    ticks: { color: 'white' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    ticks: { 
+                      color: 'rgba(255, 248, 220, 0.8)',
+                      font: { size: 11 },
+                      callback: function(value) {
+                        return value + ' kg';
+                      }
+                    },
+                    grid: { 
+                      color: 'rgba(255, 248, 220, 0.1)',
+                      borderColor: 'rgba(255, 248, 220, 0.3)'
+                    }
                   }
+                },
+                animation: {
+                  duration: 2000,
+                  easing: 'easeOutQuart'
                 }
               }}
             />
           </div>
+          <div className="mt-4 soil-moisture h-3 rounded-full"></div>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-glass-muted flex items-center">
+              <span className="mr-1">🌧️</span>
+              Soil moisture & growth conditions
+            </p>
+            <p className="text-xs text-glass-muted flex items-center">
+              <span className="mr-1">🌡️</span>
+              Optimal growing temperature
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Harvest Activity */}
       <div className="glass-card rounded-xl p-4 lg:p-6">
-        <h3 className="text-lg font-semibold text-glass mb-4">Recent Activity</h3>
+        <div className="flex items-center space-x-2 mb-4">
+          <span className="text-xl animate-float">📊</span>
+          <h3 className="text-lg font-semibold text-glass">Recent Harvest Activity</h3>
+          <span className="text-lg animate-sprout">🌾</span>
+        </div>
         <div className="space-y-3">
           {transactions.slice(0, 5).map((transaction) => {
             const farmer = farmers.find(f => f.id === transaction.farmerId);
+            const produceEmoji = {
+              'Rice': '🌾',
+              'Corn': '🌽', 
+              'Vegetables': '🥬',
+              'Fruits': '🍎',
+              'Cassava': '🍠'
+            };
             return (
-              <div key={transaction.id} className="flex items-center justify-between p-3 glass rounded-lg">
+              <div key={transaction.id} className="flex items-center justify-between p-3 glass rounded-lg hover:bg-amber-900/20 transition-all duration-200">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-emerald-700 rounded-full flex items-center justify-center relative animate-glow">
                     <DollarSign className="w-4 h-4 text-white" />
+                    <span className="absolute -top-1 -right-1 text-sm">
+                      {produceEmoji[transaction.produce as keyof typeof produceEmoji] || '🌱'}
+                    </span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-glass">
+                    <p className="text-sm font-medium text-glass flex items-center">
+                      <span className="mr-1">👨‍🌾</span>
                       {farmer?.firstName} {farmer?.lastName} - {transaction.produce}
                     </p>
-                    <p className="text-xs text-glass-light">
+                    <p className="text-xs text-glass-light flex items-center">
+                      <span className="mr-1">{transaction.type === 'sale' ? '📦' : '🛒'}</span>
                       {transaction.type === 'sale' ? 'Sold' : 'Purchased'} {transaction.quantity.toLocaleString()} kg
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-300">
+                  <p className="text-sm font-semibold text-green-300 flex items-center justify-end">
+                    <span className="mr-1">💰</span>
                     ₱{transaction.totalAmount.toLocaleString()}
                   </p>
-                  <p className="text-xs text-glass-light">
+                  <p className="text-xs text-glass-light flex items-center justify-end">
+                    <span className="mr-1">📅</span>
                     {new Date(transaction.transactionDate).toLocaleDateString()}
                   </p>
                 </div>

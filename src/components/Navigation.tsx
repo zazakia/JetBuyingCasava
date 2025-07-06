@@ -12,7 +12,6 @@ import {
   WifiOff,
   RefreshCw
 } from 'lucide-react';
-import { syncManager } from '../utils/sync';
 import type { SyncStatus } from '../types';
 
 interface NavigationProps {
@@ -20,23 +19,24 @@ interface NavigationProps {
   onTabChange: (tab: string) => void;
   syncStatus: SyncStatus;
   onMobileMenuClose?: () => void;
+  onManualSync?: () => void;
 }
 
-export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClose }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClose, onManualSync }: NavigationProps) {
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'farmers', label: 'Farmers', icon: Users },
-    { id: 'lands', label: 'Lands', icon: MapPin },
-    { id: 'crops', label: 'Crops', icon: Sprout },
-    { id: 'transactions', label: 'Transactions', icon: DollarSign },
-    { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'dashboard', label: 'Dashboard', icon: Home, emoji: '🏠' },
+    { id: 'farmers', label: 'Farmers', icon: Users, emoji: '👨‍🌾' },
+    { id: 'lands', label: 'Lands', icon: MapPin, emoji: '🏞️' },
+    { id: 'crops', label: 'Crops', icon: Sprout, emoji: '🌱' },
+    { id: 'transactions', label: 'Transactions', icon: DollarSign, emoji: '💰' },
+    { id: 'reports', label: 'Reports', icon: FileText, emoji: '📊' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, emoji: '📈' },
+    { id: 'settings', label: 'Settings', icon: Settings, emoji: '⚙️' }
   ];
 
   const handleSync = () => {
-    if (syncStatus.isOnline && !syncStatus.isSyncing) {
-      syncManager.syncWhenOnline();
+    if (syncStatus.isOnline && !syncStatus.isSyncing && onManualSync) {
+      onManualSync();
     }
   };
 
@@ -44,16 +44,24 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
     onTabChange(tab);
     onMobileMenuClose?.();
   };
+
   return (
     <nav className="glass-nav h-full flex flex-col">
       <div className="p-6">
         <div className="flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center animate-glow">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center animate-glow relative">
             <Sprout className="w-6 h-6 text-white" />
+            <span className="absolute -top-1 -right-1 text-lg animate-sprout">🌱</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-glass">AgriTracker</h1>
-            <p className="text-sm text-glass-light">Farmers Management</p>
+            <h1 className="text-xl font-bold text-glass flex items-center">
+              <span className="mr-1">🌾</span>
+              AgriTracker
+            </h1>
+            <p className="text-sm text-glass-light flex items-center">
+              <span className="mr-1">👨‍🌾</span>
+              Farmers Management
+            </p>
           </div>
         </div>
 
@@ -62,11 +70,12 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               {syncStatus.isOnline ? (
-                <Wifi className="w-4 h-4 text-emerald-500" />
+                <Wifi className="w-4 h-4 text-green-500" />
               ) : (
                 <WifiOff className="w-4 h-4 text-red-500" />
               )}
-              <span className="text-sm font-medium text-glass">
+              <span className="text-sm font-medium text-glass flex items-center">
+                <span className="mr-1">{syncStatus.isOnline ? '🌐' : '📡'}</span>
                 {syncStatus.isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
@@ -74,6 +83,7 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
               onClick={handleSync}
               disabled={!syncStatus.isOnline || syncStatus.isSyncing}
               className="p-1 rounded-md hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={syncStatus.isSyncing ? 'Syncing...' : 'Manual sync'}
             >
               <RefreshCw className={`w-4 h-4 text-glass-muted ${syncStatus.isSyncing ? 'animate-spin' : ''}`} />
             </button>
@@ -86,8 +96,15 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
             )}
           </div>
           {syncStatus.pendingChanges > 0 && (
-            <div className="text-xs text-amber-300 mt-1">
+            <div className="text-xs text-amber-300 mt-1 flex items-center">
+              <span className="mr-1">⏳</span>
               {syncStatus.pendingChanges} pending changes
+            </div>
+          )}
+          {syncStatus.isSyncing && (
+            <div className="text-xs text-blue-300 mt-1 flex items-center">
+              <span className="mr-1">🔄</span>
+              Syncing data...
             </div>
           )}
         </div>
@@ -102,11 +119,14 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
                   onClick={() => handleTabChange(item.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                     activeTab === item.id
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                      : 'text-glass-muted hover:bg-white/10 hover:text-glass'
+                      ? 'bg-green-600/20 text-green-300 border border-green-400/30 animate-glow'
+                      : 'text-glass-muted hover:bg-amber-900/20 hover:text-glass'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <div className="relative">
+                    <Icon className="w-5 h-5" />
+                    <span className="absolute -top-1 -right-1 text-xs animate-sprout">{item.emoji}</span>
+                  </div>
                   <span className="font-medium">{item.label}</span>
                 </button>
               </li>

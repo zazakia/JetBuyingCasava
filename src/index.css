@@ -2,51 +2,182 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base body styling with gradient background */
+/* Base body styling with brown soil gradient background */
 body {
-  @apply bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-900 min-h-screen;
-  background-attachment: fixed;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #CD853F 50%, #D2691E 75%, #654321 100%);
+  background-size: 400% 400%;
+  animation: soilGradient 20s ease infinite;
+  min-height: 100vh;
+  color: #ffffff;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* Glass morphism styles */
+/* Soil texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Soil particles */
+    radial-gradient(2px 2px at 10px 20px, rgba(101, 67, 33, 0.4), transparent),
+    radial-gradient(1px 1px at 30px 40px, rgba(139, 69, 19, 0.3), transparent),
+    radial-gradient(1px 1px at 50px 10px, rgba(160, 82, 45, 0.3), transparent),
+    radial-gradient(1px 1px at 80px 60px, rgba(205, 133, 63, 0.2), transparent),
+    /* Organic matter */
+    radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(101, 67, 33, 0.15) 0%, transparent 50%);
+  background-size: 80px 80px, 120px 120px, 90px 90px, 110px 110px, 200px 200px, 250px 250px;
+  animation: soilParticles 30s linear infinite;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* Rain drops on glass effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    /* Large rain drops */
+    radial-gradient(3px 8px at 20px 30px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(2px 6px at 40px 70px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(2px 5px at 90px 40px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(3px 7px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 4px at 160px 30px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(2px 5px at 200px 60px, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(3px 8px at 230px 20px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 3px at 270px 90px, rgba(255, 255, 255, 0.3), transparent),
+    /* Small water droplets */
+    radial-gradient(1px 1px at 25px 50px, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 75px 25px, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 125px 65px, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 175px 45px, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 300px 300px;
+  animation: rainDrops 12s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Glass morphism styles with brown soil tones */
 .glass {
-  @apply bg-white/10 backdrop-blur-md border border-white/20;
+  @apply bg-amber-900/20 backdrop-blur-md border border-amber-200/30;
+  box-shadow: 0 8px 32px rgba(139, 69, 19, 0.1);
 }
 
 .glass-card {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+  @apply bg-amber-900/15 backdrop-blur-md border border-amber-200/25 shadow-lg;
+  box-shadow: 
+    0 8px 32px rgba(139, 69, 19, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-nav {
-  @apply bg-white/5 backdrop-blur-xl border-r border-white/20 shadow-2xl;
+  @apply bg-amber-900/10 backdrop-blur-xl border-r border-amber-200/20 shadow-2xl;
+  background: linear-gradient(180deg, rgba(139, 69, 19, 0.1) 0%, rgba(101, 67, 33, 0.05) 100%);
 }
 
 .glass-modal {
-  @apply bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl;
+  @apply bg-amber-50/95 backdrop-blur-md border border-amber-200/50 shadow-2xl;
+  background: linear-gradient(135deg, rgba(255, 248, 220, 0.95) 0%, rgba(245, 222, 179, 0.95) 100%);
 }
 
 .glass-input {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/60;
+  @apply bg-amber-900/15 backdrop-blur-md border border-amber-200/30 text-white placeholder-amber-100/60;
+  box-shadow: inset 0 2px 4px rgba(139, 69, 19, 0.1);
 }
 
 .glass-input:focus {
-  @apply bg-white/15 border-emerald-400/50;
+  @apply bg-amber-900/20 border-green-400/60;
+  box-shadow: 
+    inset 0 2px 4px rgba(139, 69, 19, 0.1),
+    0 0 0 3px rgba(34, 197, 94, 0.2);
 }
 
 .glass-button {
-  @apply bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl;
+  @apply bg-gradient-to-r from-green-600 to-emerald-700 text-white font-medium hover:from-green-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl;
+  box-shadow: 
+    0 4px 15px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px rgba(34, 197, 94, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .text-glass {
-  @apply text-white;
+  @apply text-amber-50;
+  text-shadow: 0 1px 2px rgba(139, 69, 19, 0.3);
 }
 
 .text-glass-muted {
-  @apply text-white/70;
+  @apply text-amber-100/80;
+  text-shadow: 0 1px 2px rgba(139, 69, 19, 0.2);
 }
 
 .text-glass-light {
-  @apply text-white/50;
+  @apply text-amber-200/70;
+}
+
+/* Plant growing animation */
+@keyframes plantGrow {
+  0% {
+    transform: scaleY(0.1) translateY(20px);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scaleY(0.7) translateY(5px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scaleY(1) translateY(0px);
+    opacity: 1;
+  }
+}
+
+.animate-plant-grow {
+  animation: plantGrow 2s ease-out forwards;
+  transform-origin: bottom center;
+}
+
+/* Soil gradient animation */
+@keyframes soilGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Soil particles movement */
+@keyframes soilParticles {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-10px) rotate(360deg); }
+}
+
+/* Rain drops falling animation */
+@keyframes rainDrops {
+  0% { 
+    transform: translateY(-100px); 
+    opacity: 0; 
+  }
+  10% { 
+    opacity: 1; 
+  }
+  90% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateY(100vh); 
+    opacity: 0; 
+  }
 }
 
 /* Floating animation */
@@ -63,13 +194,13 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Glow animation */
+/* Enhanced glow animation with green plant colors */
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
   }
   50% {
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
   }
 }
 
@@ -77,33 +208,130 @@ body {
   animation: glow 2s ease-in-out infinite;
 }
 
-/* Custom scrollbar */
+/* Seed sprouting animation */
+@keyframes sprout {
+  0% {
+    transform: scale(0.5) translateY(10px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.8) translateY(5px);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1) translateY(0px);
+    opacity: 1;
+  }
+}
+
+.animate-sprout {
+  animation: sprout 1.5s ease-out forwards;
+}
+
+/* Custom scrollbar with soil theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-white/5;
+  @apply bg-amber-900/10;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-white/20 rounded-full;
+  @apply bg-amber-200/30 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-white/30;
+  @apply bg-amber-200/50;
 }
 
-/* Form select styling */
+/* Form select styling with soil theme */
 select.glass-input {
-  @apply bg-white/10 text-white;
+  @apply bg-amber-900/15 text-white;
 }
 
 select.glass-input option {
-  @apply bg-gray-800 text-white;
+  @apply bg-amber-900 text-amber-50;
 }
 
-/* Chart container styling */
+/* Chart container styling with agricultural theme */
 .chart-container {
-  @apply bg-white/5 rounded-lg p-4;
+  @apply bg-amber-900/10 rounded-lg p-4;
+  border: 1px solid rgba(245, 222, 179, 0.2);
+  box-shadow: 
+    0 4px 15px rgba(139, 69, 19, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Plant growth chart specific styles */
+.plant-chart {
+  position: relative;
+}
+
+.plant-chart::before {
+  content: '🌱';
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  font-size: 20px;
+  animation: sprout 2s ease-out infinite;
+}
+
+/* Agricultural status indicators */
+.status-planted {
+  @apply bg-amber-600/20 text-amber-200 border-amber-400/30;
+}
+
+.status-growing {
+  @apply bg-green-600/20 text-green-200 border-green-400/30;
+}
+
+.status-ready {
+  @apply bg-orange-600/20 text-orange-200 border-orange-400/30;
+}
+
+.status-harvested {
+  @apply bg-emerald-600/20 text-emerald-200 border-emerald-400/30;
+}
+
+/* Soil moisture indicator */
+.soil-moisture {
+  background: linear-gradient(90deg, 
+    rgba(139, 69, 19, 0.8) 0%, 
+    rgba(160, 82, 45, 0.6) 50%, 
+    rgba(34, 197, 94, 0.4) 100%);
+  animation: moistureFlow 3s ease-in-out infinite;
+}
+
+@keyframes moistureFlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Mobile bottom navigation enhancements */
+.mobile-nav-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Enhanced mobile touch targets */
+@media (max-width: 1023px) {
+  .mobile-nav-item {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Ensure content doesn't get hidden behind bottom nav */
+  .mobile-content-padding {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Mobile bottom nav gradient overlay */
+.mobile-nav-gradient {
+  background: linear-gradient(
+    to top,
+    rgba(139, 69, 19, 0.95) 0%,
+    rgba(139, 69, 19, 0.8) 50%,
+    rgba(139, 69, 19, 0.4) 100%
+  );
 }

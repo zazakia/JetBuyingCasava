@@ -102,3 +102,6 @@ pids/
 # Package lock files (keeping pnpm-lock.yaml)
 package-lock.json
 yarn.lock
+
+# Local Netlify folder
+.netlify

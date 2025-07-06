@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, DollarSign, Calendar, Package, TrendingUp } from 'lucide-react';
-import type { Transaction, Farmer, Crop } from '../types';
+import { Plus, Search, Edit2, DollarSign, Calendar, Package, TrendingUp, Loader } from 'lucide-react';
+import type { Transaction, Farmer, Crop, LoadingState } from '../types';
 
 interface TransactionsManagerProps {
   transactions: Transaction[];
@@ -8,6 +8,7 @@ interface TransactionsManagerProps {
   crops: Crop[];
   onAddTransaction: (transaction: Transaction) => void;
   onUpdateTransaction: (transaction: Transaction) => void;
+  loading?: LoadingState;
 }
 
 export function TransactionsManager({ 
@@ -15,7 +16,8 @@ export function TransactionsManager({
   farmers, 
   crops, 
   onAddTransaction, 
-  onUpdateTransaction 
+  onUpdateTransaction,
+  loading 
 }: TransactionsManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
