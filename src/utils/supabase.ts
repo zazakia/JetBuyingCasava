@@ -16,14 +16,10 @@ import type {
 
 let supabaseClient: SupabaseClient | null = null;
 
-// Configuration management
+// Configuration management - Environment variables only
 export const getSupabaseConfig = (): SupabaseConfig => {
-  // Try environment variables first, then fall back to localStorage
-  const envUrl = import.meta.env.VITE_SUPABASE_URL;
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  
-  const url = envUrl || localStorage.getItem('supabase_url') || '';
-  const apiKey = envKey || localStorage.getItem('supabase_api_key') || '';
+  const url = import.meta.env.VITE_SUPABASE_URL || '';
+  const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
   
   return {
     url,
@@ -32,27 +28,6 @@ export const getSupabaseConfig = (): SupabaseConfig => {
   };
 };
 
-export const saveSupabaseConfig = (config: SupabaseConfig): void => {
-  localStorage.setItem('supabase_url', config.url);
-  localStorage.setItem('supabase_api_key', config.apiKey);
-};
-
-export const clearSupabaseConfig = (): void => {
-  localStorage.removeItem('supabase_url');
-  localStorage.removeItem('supabase_api_key');
-  supabaseClient = null;
-};
-
-// URL validation
-export const isValidSupabaseUrl = (url: string): boolean => {
-  const pattern = /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co$/;
-  return pattern.test(url);
-};
-
-// API key validation
-export const isValidApiKey = (key: string): boolean => {
-  return key.length >= 100 && key.startsWith('eyJ');
-};
 
 // Get or create Supabase client
 export const getSupabaseClient = (): SupabaseClient | null => {

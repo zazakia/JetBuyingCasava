@@ -628,7 +628,7 @@ function App() {
           />
         );
       case 'settings':
-        return <SettingsManager onConfigChange={loadAllData} />;
+        return <SettingsManager />;
       default:
         return <div className="p-6">Page not found</div>;
     }

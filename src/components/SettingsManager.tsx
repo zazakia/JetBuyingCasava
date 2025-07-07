@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Database, Download, Upload, Trash2, Save, Server, AlertCircle, CheckCircle } from 'lucide-react';
-import { 
-  getSupabaseConfig, 
-  saveSupabaseConfig, 
-  clearSupabaseConfig, 
-  testConnection,
-  isValidSupabaseUrl,
-  isValidApiKey,
-  type SupabaseConfig 
-} from '../utils/supabase';
+import { Settings, User, Bell, Database, Download, Upload, Trash2, Save } from 'lucide-react';
 
-interface SettingsManagerProps {
-  onConfigChange?: () => void;
-}
+interface SettingsManagerProps {}
 
-export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
+export function SettingsManager({}: SettingsManagerProps) {
   const [activeSection, setActiveSection] = useState('profile');
   const [settings, setSettings] = useState({
     profile: {
@@ -36,24 +25,6 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
     }
   });
 
-  // Supabase configuration state
-  const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig>({
-    url: '',
-    apiKey: '',
-    isConfigured: false
-  });
-  
-  const [connectionStatus, setConnectionStatus] = useState<{
-    status: 'idle' | 'testing' | 'success' | 'error';
-    message: string;
-  }>({ status: 'idle', message: '' });
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Load Supabase config on component mount
-  useEffect(() => {
-    const config = getSupabaseConfig();
-    setSupabaseConfig(config);
-  }, []);
 
   const handleSave = () => {
     // In a real app, this would save settings to the database
@@ -77,115 +48,6 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
     }
   };
 
-  // Supabase configuration handlers
-  const handleSupabaseConfigChange = (field: 'url' | 'apiKey', value: string) => {
-    setSupabaseConfig(prev => ({
-      ...prev,
-      [field]: value,
-      isConfigured: field === 'url' ? (value.trim() !== '' && prev.apiKey.trim() !== '') 
-                                    : (prev.url.trim() !== '' && value.trim() !== '')
-    }));
-    
-    // Reset connection status when config changes
-    if (connectionStatus.status !== 'idle') {
-      setConnectionStatus({ status: 'idle', message: '' });
-    }
-  };
-
-  const handleTestConnection = async () => {
-    if (!supabaseConfig.url.trim() || !supabaseConfig.apiKey.trim()) {
-      setConnectionStatus({
-        status: 'error',
-        message: 'Please enter both URL and API key'
-      });
-      return;
-    }
-
-    // Validate URL format
-    if (!isValidSupabaseUrl(supabaseConfig.url)) {
-      setConnectionStatus({
-        status: 'error',
-        message: 'Invalid Supabase URL format'
-      });
-      return;
-    }
-
-    // Validate API key format
-    if (!isValidApiKey(supabaseConfig.apiKey)) {
-      setConnectionStatus({
-        status: 'error',
-        message: 'Invalid API key format'
-      });
-      return;
-    }
-
-    setConnectionStatus({ status: 'testing', message: 'Testing connection...' });
-    
-    try {
-      // Save config temporarily for testing
-      saveSupabaseConfig({
-        url: supabaseConfig.url,
-        apiKey: supabaseConfig.apiKey
-      });
-
-      const result = await testConnection();
-      setConnectionStatus({
-        status: result.success ? 'success' : 'error',
-        message: result.message
-      });
-
-      if (result.success) {
-        // Update local state to reflect successful configuration
-        setSupabaseConfig(prev => ({ ...prev, isConfigured: true }));
-        // Notify parent component of configuration change
-        onConfigChange?.();
-      }
-    } catch (error) {
-      setConnectionStatus({
-        status: 'error',
-        message: 'Connection test failed'
-      });
-    }
-  };
-
-  const handleSaveSupabaseConfig = async () => {
-    if (!supabaseConfig.url.trim() || !supabaseConfig.apiKey.trim()) {
-      alert('Please enter both URL and API key');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      saveSupabaseConfig({
-        url: supabaseConfig.url,
-        apiKey: supabaseConfig.apiKey
-      });
-      
-      alert('Supabase configuration saved successfully!');
-      setSupabaseConfig(prev => ({ ...prev, isConfigured: true }));
-      // Notify parent component of configuration change
-      onConfigChange?.();
-    } catch (error) {
-      alert('Failed to save Supabase configuration');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleClearSupabaseConfig = () => {
-    if (confirm('Are you sure you want to clear the Supabase configuration?')) {
-      clearSupabaseConfig();
-      setSupabaseConfig({
-        url: '',
-        apiKey: '',
-        isConfigured: false
-      });
-      setConnectionStatus({ status: 'idle', message: '' });
-      alert('Supabase configuration cleared');
-      // Notify parent component of configuration change
-      onConfigChange?.();
-    }
-  };
 
   const renderProfileSettings = () => (
     <div className="space-y-6">
@@ -245,140 +107,6 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
     </div>
   );
 
-  const renderSupabaseSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Supabase Configuration</h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Configure your Supabase database connection to enable cloud sync and backup functionality.
-        </p>
-
-        {/* Configuration Status */}
-        <div className={`p-4 rounded-lg mb-6 ${
-          supabaseConfig.isConfigured 
-            ? 'bg-green-50 border border-green-200' 
-            : 'bg-yellow-50 border border-yellow-200'
-        }`}>
-          <div className="flex items-center space-x-2">
-            {supabaseConfig.isConfigured ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
-            )}
-            <span className={`font-medium ${
-              supabaseConfig.isConfigured ? 'text-green-800' : 'text-yellow-800'
-            }`}>
-              {supabaseConfig.isConfigured 
-                ? 'Supabase is configured and ready' 
-                : 'Supabase configuration required'}
-            </span>
-          </div>
-        </div>
-
-        {/* Configuration Form */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Supabase URL
-            </label>
-            <input
-              type="url"
-              value={supabaseConfig.url}
-              onChange={(e) => handleSupabaseConfigChange('url', e.target.value)}
-              placeholder="https://your-project.supabase.co"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Your Supabase project URL (found in your project settings)
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Supabase API Key (anon/public)
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                value={supabaseConfig.apiKey}
-                onChange={(e) => handleSupabaseConfigChange('apiKey', e.target.value)}
-                placeholder="Enter your Supabase anon/public API key"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Your Supabase anon/public API key (found in your project API settings)
-            </p>
-          </div>
-
-          {/* Connection Status */}
-          {connectionStatus.status !== 'idle' && (
-            <div className={`p-3 rounded-lg ${
-              connectionStatus.status === 'success' ? 'bg-green-50 border border-green-200' :
-              connectionStatus.status === 'error' ? 'bg-red-50 border border-red-200' :
-              'bg-blue-50 border border-blue-200'
-            }`}>
-              <div className="flex items-center space-x-2">
-                {connectionStatus.status === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
-                {connectionStatus.status === 'error' && <AlertCircle className="w-4 h-4 text-red-600" />}
-                {connectionStatus.status === 'testing' && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />}
-                <span className={`text-sm ${
-                  connectionStatus.status === 'success' ? 'text-green-800' :
-                  connectionStatus.status === 'error' ? 'text-red-800' :
-                  'text-blue-800'
-                }`}>
-                  {connectionStatus.message}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <button
-              onClick={handleTestConnection}
-              disabled={connectionStatus.status === 'testing'}
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Database className="w-4 h-4" />
-              <span>Test Connection</span>
-            </button>
-
-            <button
-              onClick={handleSaveSupabaseConfig}
-              disabled={isSaving}
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
-            </button>
-
-            {supabaseConfig.isConfigured && (
-              <button
-                onClick={handleClearSupabaseConfig}
-                className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Clear Configuration</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Help Section */}
-        <div className="bg-gray-50 rounded-lg p-4 mt-6">
-          <h4 className="font-medium text-gray-900 mb-2">How to get your Supabase credentials:</h4>
-          <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-            <li>Go to your <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">Supabase Dashboard</a></li>
-            <li>Select your project</li>
-            <li>Go to Settings → API</li>
-            <li>Copy your "Project URL" and "anon/public" API key</li>
-            <li>Paste them in the fields above and test the connection</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderNotificationSettings = () => (
     <div className="space-y-6">
@@ -511,7 +239,6 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
             <nav className="space-y-2">
               {[
                 { id: 'profile', label: 'Profile', icon: User },
-                { id: 'supabase', label: 'Supabase Config', icon: Server },
                 { id: 'notifications', label: 'Notifications', icon: Bell },
                 { id: 'data', label: 'Data Management', icon: Database }
               ].map((item) => {
@@ -539,22 +266,19 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
             {activeSection === 'profile' && renderProfileSettings()}
-            {activeSection === 'supabase' && renderSupabaseSettings()}
             {activeSection === 'notifications' && renderNotificationSettings()}
             {activeSection === 'data' && renderDataSettings()}
 
-            {/* Save Button (only for profile, notifications, and data settings) */}
-            {activeSection !== 'supabase' && (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <button
-                  onClick={handleSave}
-                  className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
-                >
-                  <Save className="w-5 h-5" />
-                  <span>Save Settings</span>
-                </button>
-              </div>
-            )}
+            {/* Save Button for all settings */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={handleSave}
+                className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              >
+                <Save className="w-5 h-5" />
+                <span>Save Settings</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
