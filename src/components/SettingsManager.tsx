@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Database, Download, Upload, Trash2, Save, Server, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Settings, User, Bell, Database, Download, Upload, Trash2, Save, Server, AlertCircle, CheckCircle } from 'lucide-react';
 import { 
   getSupabaseConfig, 
   saveSupabaseConfig, 
@@ -43,7 +43,6 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
     isConfigured: false
   });
   
-  const [showApiKey, setShowApiKey] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     status: 'idle' | 'testing' | 'success' | 'error';
     message: string;
@@ -300,19 +299,12 @@ export function SettingsManager({ onConfigChange }: SettingsManagerProps) {
             </label>
             <div className="relative">
               <input
-                type={showApiKey ? 'text' : 'password'}
+                type="password"
                 value={supabaseConfig.apiKey}
                 onChange={(e) => handleSupabaseConfigChange('apiKey', e.target.value)}
                 placeholder="Enter your Supabase anon/public API key"
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              <button
-                type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Your Supabase anon/public API key (found in your project API settings)
