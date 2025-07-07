@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Phone, MapPin, Calendar, User, Loader, Layers } from 'lucide-react';
+import { Plus, Search, Edit2, Phone, MapPin, Calendar, User, Loader, Layers, Trash2 } from 'lucide-react';
 import type { Farmer, Land, LoadingState } from '../types';
 
 interface FarmersManagerProps {
@@ -7,10 +7,11 @@ interface FarmersManagerProps {
   lands: Land[];
   onAddFarmer: (farmer: Farmer) => void;
   onUpdateFarmer: (farmer: Farmer) => void;
+  onDeleteFarmer: (farmerId: string) => void;
   loading?: LoadingState;
 }
 
-export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, loading }: FarmersManagerProps) {
+export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, onDeleteFarmer, loading }: FarmersManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBarangay, setFilterBarangay] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -99,6 +100,19 @@ export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, lo
     setShowForm(true);
   };
 
+  const handleDelete = (farmer: Farmer) => {
+    const farmerLands = getFarmerLands(farmer.id);
+    const hasLands = farmerLands.length > 0;
+    
+    const message = hasLands 
+      ? `Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}?\n\nWarning: This farmer has ${farmerLands.length} associated land(s). Deleting the farmer may affect related data.`
+      : `Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}?\n\nThis action cannot be undone.`;
+    
+    if (confirm(message)) {
+      onDeleteFarmer(farmer.id);
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6 min-h-screen">
       <div className="mb-8">
@@ -178,12 +192,22 @@ export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, lo
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => handleEdit(farmer)}
-                className="p-2 text-glass-light hover:text-glass hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => handleEdit(farmer)}
+                  className="p-2 text-glass-light hover:text-glass hover:bg-white/10 rounded-lg transition-colors"
+                  title="Edit farmer"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(farmer)}
+                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                  title="Delete farmer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2 lg:space-y-3">

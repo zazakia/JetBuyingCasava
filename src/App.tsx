@@ -388,6 +388,32 @@ function App() {
     }
   };
 
+  const deleteFarmer = async (farmerId: string) => {
+    setFarmersLoading(prev => ({ ...prev, isLoading: true }));
+    
+    try {
+      const response = await farmerOperations.delete(farmerId);
+      
+      if (response.data) {
+        const updatedFarmers = farmers.filter(f => f.id !== farmerId);
+        setFarmers(updatedFarmers);
+        updateLocalFarmers(updatedFarmers);
+      }
+      
+      setFarmersLoading({
+        isLoading: false,
+        error: response.error,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      setFarmersLoading({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to delete farmer',
+        lastUpdated: null
+      });
+    }
+  };
+
   const addLand = async (land: Land) => {
     setLandsLoading(prev => ({ ...prev, isLoading: true }));
     
@@ -548,6 +574,7 @@ function App() {
             lands={lands}
             onAddFarmer={addFarmer}
             onUpdateFarmer={updateFarmer}
+            onDeleteFarmer={deleteFarmer}
             loading={farmersLoading}
           />
         );
