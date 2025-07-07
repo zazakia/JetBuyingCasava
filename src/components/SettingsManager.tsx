@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Database, Download, Upload, Trash2, Save } from 'lucide-react';
+import { Settings, User, Bell, Database, Download, Upload, Trash2, Save, RefreshCw } from 'lucide-react';
+import { SyncStatus } from './SyncStatus';
 
 interface SettingsManagerProps {}
 
@@ -239,6 +240,7 @@ export function SettingsManager({}: SettingsManagerProps) {
             <nav className="space-y-2">
               {[
                 { id: 'profile', label: 'Profile', icon: User },
+                { id: 'sync', label: 'Sync Status', icon: RefreshCw },
                 { id: 'notifications', label: 'Notifications', icon: Bell },
                 { id: 'data', label: 'Data Management', icon: Database }
               ].map((item) => {
@@ -266,19 +268,22 @@ export function SettingsManager({}: SettingsManagerProps) {
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
             {activeSection === 'profile' && renderProfileSettings()}
+            {activeSection === 'sync' && <SyncStatus showDetails={true} />}
             {activeSection === 'notifications' && renderNotificationSettings()}
             {activeSection === 'data' && renderDataSettings()}
 
-            {/* Save Button for all settings */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <button
-                onClick={handleSave}
-                className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
-              >
-                <Save className="w-5 h-5" />
-                <span>Save Settings</span>
-              </button>
-            </div>
+            {/* Save Button for settings that need saving */}
+            {activeSection !== 'sync' && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={handleSave}
+                  className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                >
+                  <Save className="w-5 h-5" />
+                  <span>Save Settings</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

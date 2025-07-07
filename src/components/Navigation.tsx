@@ -13,6 +13,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { SyncStatus as SyncStatusComponent } from './SyncStatus';
 import type { SyncStatus } from '../types';
 
 interface NavigationProps {
@@ -139,6 +140,11 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
             );
           })}
         </ul>
+        
+        {/* Enhanced Sync Status */}
+        <div className="mt-4">
+          <SyncStatusComponent className="bg-white/5 border-white/10" />
+        </div>
       </div>
       
       {/* Mobile Close Button */}
