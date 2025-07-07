@@ -12,7 +12,12 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "deploy": "./deploy.sh",
+    "deploy:git": "./scripts/deploy-git.sh",
+    "deploy:vercel": "./scripts/deploy-vercel.sh",
+    "deploy:netlify": "./scripts/deploy-netlify.sh",
+    "deploy:quick": "./scripts/quick-deploy.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",
