@@ -18,8 +18,13 @@ let supabaseClient: SupabaseClient | null = null;
 
 // Configuration management
 export const getSupabaseConfig = (): SupabaseConfig => {
-  const url = localStorage.getItem('supabase_url') || '';
-  const apiKey = localStorage.getItem('supabase_api_key') || '';
+  // Try environment variables first, then fall back to localStorage
+  const envUrl = import.meta.env.VITE_SUPABASE_URL;
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  const url = envUrl || localStorage.getItem('supabase_url') || '';
+  const apiKey = envKey || localStorage.getItem('supabase_api_key') || '';
+  
   return {
     url,
     apiKey,
@@ -78,7 +83,7 @@ export const testConnection = async (): Promise<{ success: boolean; message: str
   }
 
   try {
-    const { data, error } = await client.from('farmers').select('count', { count: 'exact', head: true });
+    const { data, error } = await client.from('JetAgriTracker.farmers').select('count', { count: 'exact', head: true });
     
     if (error) {
       return { success: false, message: error.message };
@@ -266,7 +271,7 @@ const createRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(table)
+      .from(`JetAgriTracker.${table}`)
       .insert(dbData)
       .select()
       .single();
@@ -332,7 +337,7 @@ const updateRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(table)
+      .from(`JetAgriTracker.${table}`)
       .update(dbData)
       .eq('id', id)
       .select()
@@ -391,7 +396,7 @@ const deleteRecord = async (table: string, id: string): Promise<ApiResponse<bool
 
   try {
     const { error } = await client
-      .from(table)
+      .from(`JetAgriTracker.${table}`)
       .delete()
       .eq('id', id);
 
@@ -440,7 +445,7 @@ const fetchRecords = async <T, TDB>(
 
   try {
     const { data, error } = await client
-      .from(table)
+      .from(`JetAgriTracker.${table}`)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -528,7 +533,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         }
 
         const dbData = transformer(action.data);
-        const { error } = await client.from(table).insert(dbData);
+        const { error } = await client.from(`JetAgriTracker.${table}`).insert(dbData);
         
         if (error) throw error;
         
@@ -555,7 +560,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
 
         const dbData = transformer(action.data);
         const { error } = await client
-          .from(table)
+          .from(`JetAgriTracker.${table}`)
           .update(dbData)
           .eq('id', action.data.id);
         
@@ -563,7 +568,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         
       } else if (action.type === 'DELETE') {
         const { error } = await client
-          .from(action.table)
+          .from(`JetAgriTracker.${action.table}`)
           .delete()
           .eq('id', action.data.id);
         

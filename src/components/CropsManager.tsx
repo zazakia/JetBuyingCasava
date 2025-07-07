@@ -179,6 +179,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredCrops.map(crop => {
           const farmer = farmers.find(f => f.id === crop.farmerId);
+          const land = lands.find(l => l.id === crop.landId);
           
           return (
             <div key={crop.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">

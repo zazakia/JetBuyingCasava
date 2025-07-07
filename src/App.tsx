@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Navigation } from './components/Navigation';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Dashboard } from './components/Dashboard';
@@ -544,6 +545,7 @@ function App() {
         return (
           <FarmersManager
             farmers={farmers}
+            lands={lands}
             onAddFarmer={addFarmer}
             onUpdateFarmer={updateFarmer}
             loading={farmersLoading}
@@ -668,4 +670,13 @@ function App() {
   );
 }
 
-export default App;
+// Wrapper component with ThemeProvider
+function AppWithTheme() {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+}
+
+export default AppWithTheme;

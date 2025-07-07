@@ -3,18 +3,29 @@
 @tailwind utilities;
 
 /* Base body styling with brown soil gradient background */
-body {
+body.theme-default {
   background: linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #CD853F 50%, #D2691E 75%, #654321 100%);
   background-size: 400% 400%;
   animation: soilGradient 20s ease infinite;
   min-height: 100vh;
-  color: #ffffff;
+  color: #000000;
   overflow-x: hidden;
   position: relative;
 }
 
-/* Soil texture overlay */
-body::before {
+/* White theme styling */
+body.theme-white {
+  background: #ffffff;
+  background-size: initial;
+  animation: none;
+  min-height: 100vh;
+  color: #000000;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Soil texture overlay - only for default theme */
+body.theme-default::before {
   content: '';
   position: fixed;
   top: 0;
@@ -126,6 +137,109 @@ body::after {
 
 .text-glass-light {
   @apply text-amber-200/70;
+}
+
+/* Theme-specific text colors */
+body.theme-white .text-glass,
+body.theme-white .text-glass-muted,
+body.theme-white .text-glass-light {
+  @apply text-gray-900;
+  text-shadow: none;
+}
+
+body.theme-white .glass-nav,
+body.theme-white .glass-card {
+  @apply bg-white/90 backdrop-blur-md border-gray-200/50;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-white .glass-input {
+  @apply bg-white/90 border-gray-300 text-gray-900 placeholder-gray-400;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-white .glass-input:focus {
+  @apply border-emerald-500;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Ensure all text is readable - override all text colors */
+body.theme-white *:not(.text-white):not(.text-green-500):not(.text-emerald-500):not(.text-emerald-600):not(.text-red-500):not(.text-red-600):not(.text-amber-500):not(.text-yellow-500) {
+  color: #000000 !important;
+}
+
+body.theme-default *:not(.text-white):not(.text-green-500):not(.text-emerald-500):not(.text-emerald-600):not(.text-red-500):not(.text-red-600):not(.text-amber-500):not(.text-yellow-500) {
+  color: #000000 !important;
+}
+
+/* Specific overrides for common Tailwind text colors */
+body.theme-white .text-gray-600,
+body.theme-white .text-gray-500,
+body.theme-white .text-gray-400,
+body.theme-white .text-gray-300,
+body.theme-white .text-gray-200,
+body.theme-white .text-gray-100,
+body.theme-white .text-white,
+body.theme-default .text-gray-600,
+body.theme-default .text-gray-500,
+body.theme-default .text-gray-400,
+body.theme-default .text-gray-300,
+body.theme-default .text-gray-200,
+body.theme-default .text-gray-100,
+body.theme-default .text-white {
+  color: #000000 !important;
+}
+
+/* Keep status colors visible but ensure they're dark enough */
+body.theme-white .text-green-600,
+body.theme-white .text-emerald-600,
+body.theme-default .text-green-600,
+body.theme-default .text-emerald-600 {
+  color: #059669 !important;
+}
+
+body.theme-white .text-red-600,
+body.theme-default .text-red-600 {
+  color: #dc2626 !important;
+}
+
+/* Ensure card backgrounds provide proper contrast */
+body.theme-white .bg-white {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+body.theme-default .bg-white {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Override any transparent backgrounds that might cause readability issues */
+body.theme-white .bg-gray-50,
+body.theme-white .bg-gray-100,
+body.theme-default .bg-gray-50,
+body.theme-default .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Ensure form inputs have proper backgrounds */
+body.theme-white input,
+body.theme-white textarea,
+body.theme-white select,
+body.theme-default input,
+body.theme-default textarea,
+body.theme-default select {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* Button text readability */
+body.theme-white button:not(.glass-button):not(.bg-emerald-600):not(.bg-green-600):not(.bg-red-600),
+body.theme-default button:not(.glass-button):not(.bg-emerald-600):not(.bg-green-600):not(.bg-red-600) {
+  color: #000000 !important;
 }
 
 /* Plant growing animation */

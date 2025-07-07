@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Phone, MapPin, Calendar, User, Loader } from 'lucide-react';
-import type { Farmer, LoadingState } from '../types';
+import { Plus, Search, Edit2, Phone, MapPin, Calendar, User, Loader, Layers } from 'lucide-react';
+import type { Farmer, Land, LoadingState } from '../types';
 
 interface FarmersManagerProps {
   farmers: Farmer[];
+  lands: Land[];
   onAddFarmer: (farmer: Farmer) => void;
   onUpdateFarmer: (farmer: Farmer) => void;
   loading?: LoadingState;
 }
 
-export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer, loading }: FarmersManagerProps) {
+export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, loading }: FarmersManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBarangay, setFilterBarangay] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -39,6 +40,11 @@ export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer, loading }
     
     return matchesSearch && matchesBarangay;
   });
+
+  // Helper function to get farmer's lands
+  const getFarmerLands = (farmerId: string) => {
+    return lands.filter(land => land.farmerId === farmerId);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +199,18 @@ export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer, loading }
                 <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                 <span className="text-xs lg:text-sm">Registered: {new Date(farmer.dateRegistered).toLocaleDateString()}</span>
               </div>
+              {(() => {
+                const farmerLands = getFarmerLands(farmer.id);
+                return farmerLands.length > 0 && (
+                  <div className="flex items-start text-glass-muted">
+                    <Layers className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs lg:text-sm">
+                      <span className="font-medium">Lands: </span>
+                      <span>{farmerLands.map(land => `${land.name} (${land.area}ha)`).join(', ')}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               {farmer.totalHectares > 0 && (
                 <div className="flex items-center text-glass-muted">
                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
@@ -328,6 +346,15 @@ export function FarmersManager({ farmers, onAddFarmer, onUpdateFarmer, loading }
                     />
                   </div>
                 </div>
+
+                {!editingFarmer && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>💡 Tip:</strong> After adding this farmer, don't forget to add their land parcels in the 
+                      <strong> Lands</strong> section to complete their profile and enable crop tracking.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                   <button

@@ -12,6 +12,7 @@ import {
   WifiOff,
   RefreshCw
 } from 'lucide-react';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import type { SyncStatus } from '../types';
 
 interface NavigationProps {
@@ -63,6 +64,11 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
               Farmers Management
             </p>
           </div>
+        </div>
+
+        {/* Theme Switcher */}
+        <div className="mb-4">
+          <ThemeSwitcher className="w-full justify-start" />
         </div>
 
         {/* Sync Status */}

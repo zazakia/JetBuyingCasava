@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, BarChart3, Target, Calendar } from 'lucide-react';
-import { Line, Scatter } from 'react-chartjs-2';
+import { Line, Scatter, Bar } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
 interface AnalyticsManagerProps {
@@ -127,21 +127,21 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
         <MetricCard
           title="Avg Yield Efficiency"
-          value={`${(analytics.yieldEfficiency.reduce((sum, y) => sum + y.efficiency, 0) / analytics.yieldEfficiency.length || 0).toFixed(1)}%`}
+          value={`${analytics.yieldEfficiency.length > 0 ? (analytics.yieldEfficiency.reduce((sum, y) => sum + y.efficiency, 0) / analytics.yieldEfficiency.length).toFixed(1) : '0.0'}%`}
           change={5.2}
           icon={Target}
           color="bg-gradient-to-br from-emerald-500 to-teal-600"
         />
         <MetricCard
           title="Top Farmer Revenue"
-          value={`₱${analytics.farmerPerformance[0]?.revenue.toLocaleString() || 0}`}
+          value={`₱${analytics.farmerPerformance.length > 0 ? analytics.farmerPerformance[0].revenue.toLocaleString() : '0'}`}
           change={12.3}
           icon={TrendingUp}
           color="bg-gradient-to-br from-blue-500 to-indigo-600"
         />
         <MetricCard
           title="Best Crop ROI"
-          value={Object.keys(analytics.cropAnalysis)[0] || 'N/A'}
+          value={Object.keys(analytics.cropAnalysis).length > 0 ? Object.keys(analytics.cropAnalysis)[0] : 'N/A'}
           icon={BarChart3}
           color="bg-gradient-to-br from-purple-500 to-pink-600"
         />
@@ -190,125 +190,149 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
         {/* Yield Efficiency Scatter */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Yield Efficiency by Area</h3>
-          <Scatter
-            data={{
-              datasets: [{
-                label: 'Crops',
-                data: analytics.yieldEfficiency.map(y => ({ x: y.area, y: y.efficiency })),
-                backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                borderColor: 'rgb(16, 185, 129)'
-              }]
-            }}
-            options={{
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { title: { display: true, text: 'Area Planted (ha)' } },
-                y: { title: { display: true, text: 'Efficiency (%)' } }
-              }
-            }}
-          />
+          {analytics.yieldEfficiency.length > 0 ? (
+            <Scatter
+              data={{
+                datasets: [{
+                  label: 'Crops',
+                  data: analytics.yieldEfficiency.map(y => ({ x: y.area, y: y.efficiency })),
+                  backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                  borderColor: 'rgb(16, 185, 129)'
+                }]
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { title: { display: true, text: 'Area Planted (ha)' } },
+                  y: { title: { display: true, text: 'Efficiency (%)' } }
+                }
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              <p>No yield efficiency data available</p>
+            </div>
+          )}
         </div>
 
         {/* Crop Type Performance */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Crop Type Revenue</h3>
-          <Bar
-            data={{
-              labels: Object.keys(analytics.cropAnalysis),
-              datasets: [{
-                label: 'Revenue (₱)',
-                data: Object.values(analytics.cropAnalysis).map((c: any) => c.totalRevenue),
-                backgroundColor: [
-                  'rgba(16, 185, 129, 0.8)',
-                  'rgba(59, 130, 246, 0.8)',
-                  'rgba(139, 92, 246, 0.8)',
-                  'rgba(245, 158, 11, 0.8)'
-                ]
-              }]
-            }}
-            options={{
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: { y: { beginAtZero: true } }
-            }}
-          />
+          {Object.keys(analytics.cropAnalysis).length > 0 ? (
+            <Bar
+              data={{
+                labels: Object.keys(analytics.cropAnalysis),
+                datasets: [{
+                  label: 'Revenue (₱)',
+                  data: Object.values(analytics.cropAnalysis).map((c: any) => c.totalRevenue),
+                  backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(245, 158, 11, 0.8)'
+                  ]
+                }]
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              <p>No crop revenue data available</p>
+            </div>
+          )}
         </div>
 
         {/* Top Farmers */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Farmers</h3>
-          <div className="space-y-3">
-            {analytics.farmerPerformance.slice(0, 5).map((farmer, index) => (
-              <div key={farmer.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                    index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300'
-                  }`}>
-                    {index + 1}
+          {analytics.farmerPerformance.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.farmerPerformance.slice(0, 5).map((farmer, index) => (
+                <div key={farmer.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm lg:text-base">{farmer.name}</p>
+                      <p className="text-xs lg:text-sm text-gray-500">{farmer.harvest.toLocaleString()} kg harvested</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm lg:text-base">{farmer.name}</p>
-                    <p className="text-xs lg:text-sm text-gray-500">{farmer.harvest.toLocaleString()} kg harvested</p>
+                  <div className="text-right">
+                    <p className="font-semibold text-emerald-600 text-sm lg:text-base">₱{farmer.revenue.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">{farmer.efficiency.toFixed(1)} kg/ha</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-emerald-600 text-sm lg:text-base">₱{farmer.revenue.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">{farmer.efficiency.toFixed(1)} kg/ha</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <p>No farmer performance data available</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Detailed Analysis Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Crop Analysis Summary</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Crop Type
-                </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Area (ha)
-                </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Harvest (kg)
-                </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avg Yield (kg/ha)
-                </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Revenue (₱)
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {Object.entries(analytics.cropAnalysis).map(([cropType, data]: [string, any]) => (
-                <tr key={cropType}>
-                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {cropType}
-                  </td>
-                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {data.totalPlanted.toFixed(1)}
-                  </td>
-                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {data.totalHarvested.toLocaleString()}
-                  </td>
-                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {data.avgYield.toFixed(1)}
-                  </td>
-                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ₱{data.totalRevenue.toLocaleString()}
-                  </td>
+        {Object.keys(analytics.cropAnalysis).length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Crop Type
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Area (ha)
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Harvest (kg)
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Avg Yield (kg/ha)
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Revenue (₱)
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Object.entries(analytics.cropAnalysis).map(([cropType, data]: [string, any]) => (
+                  <tr key={cropType}>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {cropType}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {data.totalPlanted.toFixed(1)}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {data.totalHarvested.toLocaleString()}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {data.avgYield.toFixed(1)}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ₱{data.totalRevenue.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-32 text-gray-500">
+            <p>No crop analysis data available</p>
+          </div>
+        )}
       </div>
     </div>
   );
