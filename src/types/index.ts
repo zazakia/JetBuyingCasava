@@ -205,3 +205,68 @@ export interface SyncResult {
   failed: number;
   errors: string[];
 }
+
+// Authentication types
+export interface User {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: 'admin' | 'manager' | 'user';
+  isActive: boolean;
+  profilePicture?: string;
+  phone?: string;
+  organization?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  role: 'admin' | 'manager' | 'user';
+  is_active: boolean;
+  profile_picture?: string;
+  phone?: string;
+  organization?: string;
+  created_at: string;
+  updated_at: string;
+  last_login_at?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  role?: 'admin' | 'manager' | 'user';
+  organization?: string;
+  phone?: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  clearError: () => void;
+}

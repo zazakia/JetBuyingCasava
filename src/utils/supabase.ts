@@ -58,7 +58,7 @@ export const testConnection = async (): Promise<{ success: boolean; message: str
   }
 
   try {
-    const { data, error } = await client.from('JetAgriTracker.farmers').select('count', { count: 'exact', head: true });
+    const { data, error } = await client.from('jetagritracker.farmers').select('count', { count: 'exact', head: true });
     
     if (error) {
       return { success: false, message: error.message };
@@ -246,7 +246,7 @@ const createRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(`JetAgriTracker.${table}`)
+      .from(`jetagritracker.${table}`)
       .insert(dbData)
       .select()
       .single();
@@ -312,7 +312,7 @@ const updateRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(`JetAgriTracker.${table}`)
+      .from(`jetagritracker.${table}`)
       .update(dbData)
       .eq('id', id)
       .select()
@@ -371,7 +371,7 @@ const deleteRecord = async (table: string, id: string): Promise<ApiResponse<bool
 
   try {
     const { error } = await client
-      .from(`JetAgriTracker.${table}`)
+      .from(`jetagritracker.${table}`)
       .delete()
       .eq('id', id);
 
@@ -420,7 +420,7 @@ const fetchRecords = async <T, TDB>(
 
   try {
     const { data, error } = await client
-      .from(`JetAgriTracker.${table}`)
+      .from(`jetagritracker.${table}`)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -508,7 +508,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         }
 
         const dbData = transformer(action.data);
-        const { error } = await client.from(`JetAgriTracker.${table}`).insert(dbData);
+        const { error } = await client.from(`jetagritracker.${table}`).insert(dbData);
         
         if (error) throw error;
         
@@ -535,7 +535,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
 
         const dbData = transformer(action.data);
         const { error } = await client
-          .from(`JetAgriTracker.${table}`)
+          .from(`jetagritracker.${table}`)
           .update(dbData)
           .eq('id', action.data.id);
         
@@ -543,7 +543,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         
       } else if (action.type === 'DELETE') {
         const { error } = await client
-          .from(`JetAgriTracker.${action.table}`)
+          .from(`jetagritracker.${action.table}`)
           .delete()
           .eq('id', action.data.id);
         

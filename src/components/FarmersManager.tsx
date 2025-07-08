@@ -29,9 +29,9 @@ export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, on
     dateHarvested: ''
   });
 
-  const barangays = [...new Set(farmers.map(f => f.barangay))].sort();
+  const barangays = [...new Set((farmers || []).map(f => f.barangay))].sort();
 
-  const filteredFarmers = farmers.filter(farmer => {
+  const filteredFarmers = (farmers || []).filter(farmer => {
     const matchesSearch = 
       farmer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       farmer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,7 +44,7 @@ export function FarmersManager({ farmers, lands, onAddFarmer, onUpdateFarmer, on
 
   // Helper function to get farmer's lands
   const getFarmerLands = (farmerId: string) => {
-    return lands.filter(land => land.farmerId === farmerId);
+    return lands?.filter(land => land.farmerId === farmerId) || [];
   };
 
   const handleSubmit = (e: React.FormEvent) => {

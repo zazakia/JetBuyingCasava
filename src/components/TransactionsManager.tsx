@@ -39,8 +39,8 @@ export function TransactionsManager({
     notes: ''
   });
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const farmer = farmers.find(f => f.id === transaction.farmerId);
+  const filteredTransactions = (transactions || []).filter(transaction => {
+    const farmer = (farmers || []).find(f => f.id === transaction.farmerId);
     
     const matchesSearch = 
       transaction.buyerSeller.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -180,7 +180,7 @@ export function TransactionsManager({
       {/* Transactions Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredTransactions.map(transaction => {
-          const farmer = farmers.find(f => f.id === transaction.farmerId);
+          const farmer = (farmers || []).find(f => f.id === transaction.farmerId);
           
           return (
             <div key={transaction.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
@@ -264,7 +264,7 @@ export function TransactionsManager({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm lg:text-base"
                     >
                       <option value="">Select Farmer</option>
-                      {farmers.map(farmer => (
+                      {(farmers || []).map(farmer => (
                         <option key={farmer.id} value={farmer.id}>
                           {farmer.firstName} {farmer.lastName}
                         </option>

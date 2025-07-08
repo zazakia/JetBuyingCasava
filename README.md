@@ -112,33 +112,36 @@ pnpm test:ui
 - ✅ **Responsive Tests**: Mobile and desktop viewport testing
 - ✅ **Error Handling**: Edge cases and error scenarios
 
-See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for detailed testing information.
+See [TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) for detailed testing information.
 
 ## 🗂️ Project Structure
 
 ```
-src/
-├── components/           # React components
-│   ├── AnalyticsManager.tsx
-│   ├── CropsManager.tsx
-│   ├── Dashboard.tsx
-│   ├── FarmersManager.tsx
-│   ├── LandsManager.tsx
-│   ├── Navigation.tsx
-│   ├── ReportsManager.tsx
-│   ├── SettingsManager.tsx
-│   ├── TransactionsManager.tsx
-│   └── __tests__/       # Component tests
-├── types/
-│   └── index.ts         # TypeScript interfaces
-├── utils/
-│   ├── supabase.ts      # Supabase integration
-│   ├── sync.ts          # Data synchronization
-│   └── __tests__/       # Utility tests
-├── test/
-│   ├── setup.ts         # Test configuration
-│   └── utils.tsx        # Test utilities
-└── __tests__/           # Integration tests
+├── docs/                 # Documentation files
+│   ├── CLAUDE.md        # Claude Code guidance
+│   ├── TESTING_GUIDE.md # Testing documentation
+│   ├── DEPLOYMENT.md    # Deployment guide
+│   └── DATABASE_CONNECTION_GUIDE.md
+├── database/            # Database schemas
+│   ├── DATABASE_SCHEMA_JETAGRITRACKER_PRODUCTION.sql
+│   └── DATABASE_SCHEMA_JETAGRITRACKER_SIMPLE.sql
+├── scripts/             # Deployment and setup scripts
+│   ├── deploy.sh        # Main deployment script
+│   ├── deploy-git.sh    # Git deployment
+│   ├── deploy-vercel.sh # Vercel deployment
+│   └── deploy-netlify.sh # Netlify deployment
+└── src/
+    ├── components/      # React components
+    │   ├── AnalyticsManager.tsx
+    │   ├── Dashboard.tsx
+    │   ├── FarmersManager.tsx
+    │   └── __tests__/   # Component tests
+    ├── types/
+    │   └── index.ts     # TypeScript interfaces
+    ├── utils/
+    │   ├── supabase.ts  # Supabase integration
+    │   └── __tests__/   # Utility tests
+    └── __tests__/       # Integration tests
 ```
 
 ## ☁️ Supabase Setup

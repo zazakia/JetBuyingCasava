@@ -12,15 +12,20 @@ interface AnalyticsManagerProps {
 
 export function AnalyticsManager({ farmers, lands, crops, transactions }: AnalyticsManagerProps) {
   const analytics = useMemo(() => {
+    const safeTransactions = transactions || [];
+    const safeCrops = crops || [];
+    const safeFarmers = farmers || [];
+    const safeLands = lands || [];
+    
     // Monthly trends
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
       const month = i;
-      const monthTransactions = transactions.filter(t => {
+      const monthTransactions = safeTransactions.filter(t => {
         const date = new Date(t.transactionDate);
         return date.getMonth() === month && date.getFullYear() === new Date().getFullYear();
       });
       
-      const monthCrops = crops.filter(c => {
+      const monthCrops = safeCrops.filter(c => {
         if (!c.actualHarvestDate) return false;
         const date = new Date(c.actualHarvestDate);
         return date.getMonth() === month && date.getFullYear() === new Date().getFullYear();
@@ -35,7 +40,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
     });
 
     // Yield efficiency analysis
-    const yieldEfficiency = crops
+    const yieldEfficiency = safeCrops
       .filter(c => c.actualYield && c.expectedYield)
       .map(c => ({
         efficiency: ((c.actualYield! / c.expectedYield) * 100),
@@ -44,12 +49,12 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
       }));
 
     // Farmer performance
-    const farmerPerformance = farmers.map(farmer => {
-      const farmerCrops = crops.filter(c => c.farmerId === farmer.id);
-      const farmerTransactions = transactions.filter(t => t.farmerId === farmer.id && t.type === 'sale');
+    const farmerPerformance = safeFarmers.map(farmer => {
+      const farmerCrops = safeCrops.filter(c => c.farmerId === farmer.id);
+      const farmerTransactions = safeTransactions.filter(t => t.farmerId === farmer.id && t.type === 'sale');
       const totalRevenue = farmerTransactions.reduce((sum, t) => sum + t.totalAmount, 0);
       const totalHarvest = farmerCrops.reduce((sum, c) => sum + (c.actualYield || 0), 0);
-      const totalArea = lands.filter(l => l.farmerId === farmer.id).reduce((sum, l) => sum + l.area, 0);
+      const totalArea = safeLands.filter(l => l.farmerId === farmer.id).reduce((sum, l) => sum + l.area, 0);
 
       return {
         name: `${farmer.firstName} ${farmer.lastName}`,
@@ -61,7 +66,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
     }).sort((a, b) => b.revenue - a.revenue);
 
     // Crop type analysis
-    const cropAnalysis = crops.reduce((acc, crop) => {
+    const cropAnalysis = safeCrops.reduce((acc, crop) => {
       if (!acc[crop.cropType]) {
         acc[crop.cropType] = {
           totalPlanted: 0,
@@ -76,7 +81,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
       acc[crop.cropType].totalHarvested += crop.actualYield || 0;
       acc[crop.cropType].count += 1;
       
-      const cropTransactions = transactions.filter(t => t.produce === crop.cropType && t.type === 'sale');
+      const cropTransactions = safeTransactions.filter(t => t.produce === crop.cropType && t.type === 'sale');
       acc[crop.cropType].totalRevenue += cropTransactions.reduce((sum, t) => sum + t.totalAmount, 0);
       
       return acc;
@@ -94,7 +99,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
       farmerPerformance,
       cropAnalysis
     };
-  }, [farmers, lands, crops, transactions]);
+  }, [safeFarmers, safeLands, safeCrops, safeTransactions]);
 
   const MetricCard = ({ title, value, change, icon: Icon, color }: any) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
@@ -147,7 +152,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
         />
         <MetricCard
           title="Active Farmers"
-          value={farmers.filter(f => f.isActive).length}
+          value={(farmers || []).filter(f => f.isActive).length}
           change={8.1}
           icon={Calendar}
           color="bg-gradient-to-br from-amber-500 to-orange-600"

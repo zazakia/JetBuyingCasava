@@ -7,4 +7,17 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['chart.js', 'react-chartjs-2'],
+          supabase: ['@supabase/supabase-js'],
+          utils: ['date-fns', 'lucide-react']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 });

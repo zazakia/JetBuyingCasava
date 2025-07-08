@@ -1,6 +1,6 @@
--- JetAgriTracker Database Schema for Supabase (Simple Version)
+-- JetAgriTracker Database Schema for Supabase (Production Ready)
 -- Run this SQL in your Supabase SQL Editor to create all necessary tables
--- This uses gen_random_uuid() which is built into PostgreSQL 13+ (Supabase default)
+-- This version does NOT include sample data to avoid foreign key errors
 
 -- STEP 1: Create JetAgriTracker schema
 CREATE SCHEMA IF NOT EXISTS JetAgriTracker;
@@ -239,29 +239,45 @@ GROUP BY table_name;
 -- Grant access to the view
 GRANT SELECT ON JetAgriTracker.sync_status_view TO anon, authenticated;
 
--- STEP 13: Insert sample data for testing (optional - remove if not needed)
--- This will help test the sync status functionality
-DO $$ 
+-- STEP 13: Create a function to help with testing (optional)
+CREATE OR REPLACE FUNCTION JetAgriTracker.create_test_data()
+RETURNS TEXT AS $$
 DECLARE
-    sample_user_id UUID := 'b1234567-89ab-cdef-0123-456789abcdef'; -- Replace with actual user ID
+    current_user_id UUID := auth.uid();
+    farmer_id UUID;
+    land_id UUID;
 BEGIN
-    -- Only insert if we're in development/testing
-    IF NOT EXISTS (SELECT 1 FROM JetAgriTracker.farmers LIMIT 1) THEN
-        -- Sample farmer
-        INSERT INTO JetAgriTracker.farmers (id, first_name, last_name, phone, address, barangay, municipality, province, user_id)
-        VALUES (gen_random_uuid(), 'Juan', 'dela Cruz', '+63 912 345 6789', '123 Barangay Street', 'San Isidro', 'Cabanatuan', 'Nueva Ecija', sample_user_id);
-        
-        -- Sample sync log entries
-        INSERT INTO JetAgriTracker.sync_log (table_name, operation, record_id, sync_status, user_id)
-        VALUES 
-        ('farmers', 'CREATE', gen_random_uuid(), 'synced', sample_user_id),
-        ('farmers', 'UPDATE', gen_random_uuid(), 'pending', sample_user_id),
-        ('lands', 'CREATE', gen_random_uuid(), 'synced', sample_user_id),
-        ('crops', 'CREATE', gen_random_uuid(), 'failed', sample_user_id);
-        
-        RAISE NOTICE 'Sample data inserted for testing';
+    -- Check if user is authenticated
+    IF current_user_id IS NULL THEN
+        RETURN 'Error: User not authenticated. Please log in first.';
     END IF;
-END $$;
+    
+    -- Create a test farmer
+    INSERT INTO JetAgriTracker.farmers (first_name, last_name, phone, address, barangay, municipality, province, user_id)
+    VALUES ('Juan', 'dela Cruz', '+63 912 345 6789', '123 Barangay Street', 'San Isidro', 'Cabanatuan', 'Nueva Ecija', current_user_id)
+    RETURNING id INTO farmer_id;
+    
+    -- Create a test land
+    INSERT INTO JetAgriTracker.lands (farmer_id, name, area, barangay, municipality, province, user_id)
+    VALUES (farmer_id, 'East Field', 2.5, 'San Isidro', 'Cabanatuan', 'Nueva Ecija', current_user_id)
+    RETURNING id INTO land_id;
+    
+    -- Create a test crop
+    INSERT INTO JetAgriTracker.crops (land_id, farmer_id, crop_type, planting_date, area_planted, expected_yield, user_id)
+    VALUES (land_id, farmer_id, 'Cassava', CURRENT_DATE - INTERVAL '30 days', 2.0, 4000, current_user_id);
+    
+    -- Create test sync log entries
+    INSERT INTO JetAgriTracker.sync_log (table_name, operation, record_id, sync_status, user_id)
+    VALUES 
+    ('farmers', 'CREATE', farmer_id, 'synced', current_user_id),
+    ('lands', 'CREATE', land_id, 'synced', current_user_id);
+    
+    RETURN 'Test data created successfully for user: ' || current_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission on the function
+GRANT EXECUTE ON FUNCTION JetAgriTracker.create_test_data() TO authenticated;
 
 -- Success message
 DO $$ 
@@ -271,10 +287,15 @@ BEGIN
     RAISE NOTICE '🔒 RLS policies enabled for all tables';
     RAISE NOTICE '📊 Indexes and triggers created';
     RAISE NOTICE '🔄 Sync status view created';
+    RAISE NOTICE '🧪 Test data function created';
     RAISE NOTICE '🚀 Ready to use with AgriTracker Pro application!';
     RAISE NOTICE '';
     RAISE NOTICE '📋 Next steps:';
-    RAISE NOTICE '1. Verify all tables were created in JetAgriTracker schema';
-    RAISE NOTICE '2. Test the application with your environment variables';
-    RAISE NOTICE '3. Check sync status in the Settings page';
+    RAISE NOTICE '1. Sign up/login to your application';
+    RAISE NOTICE '2. Optionally run: SELECT JetAgriTracker.create_test_data(); (when logged in)';
+    RAISE NOTICE '3. Test the application features';
+    RAISE NOTICE '4. Check sync status in Settings page';
+    RAISE NOTICE '';
+    RAISE NOTICE '⚠️  Note: NO sample data included to avoid foreign key errors';
+    RAISE NOTICE '   Sample data can be created after user authentication';
 END $$;

@@ -89,6 +89,30 @@ const DATA_KEYS = {
   transactions: 'agritracker_transactions'
 };
 
+// Retry logic for sync operations
+const retrySync = async <T>(
+  syncOperation: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await syncOperation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      
+      if (attempt < maxRetries) {
+        // Wait before retrying with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, attempt)));
+      }
+    }
+  }
+  
+  throw lastError;
+};
+
 // Sync individual entity types
 export const syncFarmers = async (): Promise<LoadingState & { data: Farmer[] }> => {
   const state: LoadingState & { data: Farmer[] } = {
@@ -100,7 +124,11 @@ export const syncFarmers = async (): Promise<LoadingState & { data: Farmer[] }> 
 
   try {
     if (isOnline()) {
-      const response = await farmerOperations.fetchAll();
+      const response = await retrySync(
+        () => farmerOperations.fetchAll(),
+        3,
+        1000
+      );
       
       if (response.error) {
         throw new Error(response.error);
@@ -132,7 +160,11 @@ export const syncLands = async (): Promise<LoadingState & { data: Land[] }> => {
 
   try {
     if (isOnline()) {
-      const response = await landOperations.fetchAll();
+      const response = await retrySync(
+        () => landOperations.fetchAll(),
+        3,
+        1000
+      );
       
       if (response.error) {
         throw new Error(response.error);
@@ -164,7 +196,11 @@ export const syncCrops = async (): Promise<LoadingState & { data: Crop[] }> => {
 
   try {
     if (isOnline()) {
-      const response = await cropOperations.fetchAll();
+      const response = await retrySync(
+        () => cropOperations.fetchAll(),
+        3,
+        1000
+      );
       
       if (response.error) {
         throw new Error(response.error);
@@ -196,7 +232,11 @@ export const syncTransactions = async (): Promise<LoadingState & { data: Transac
 
   try {
     if (isOnline()) {
-      const response = await transactionOperations.fetchAll();
+      const response = await retrySync(
+        () => transactionOperations.fetchAll(),
+        3,
+        1000
+      );
       
       if (response.error) {
         throw new Error(response.error);
@@ -288,7 +328,12 @@ export const startAutoSync = (intervalMinutes: number = 5): void => {
   stopAutoSync();
   
   autoSyncInterval = setInterval(() => {
-    if (isOnline() && !syncStatus.isSyncing && getPendingSyncCount() > 0) {
+    // Only sync if online, not already syncing, and has pending changes OR it's been more than 30 minutes since last sync
+    const now = Date.now();
+    const lastSyncTime = syncStatus.lastSync ? new Date(syncStatus.lastSync).getTime() : 0;
+    const thirtyMinutesAgo = now - (30 * 60 * 1000);
+    
+    if (isOnline() && !syncStatus.isSyncing && (getPendingSyncCount() > 0 || lastSyncTime < thirtyMinutesAgo)) {
       performFullSync();
     }
   }, intervalMinutes * 60 * 1000);
@@ -345,5 +390,4 @@ export const resolveConflicts = async <T extends { id: string }>(
   return merged;
 };
 
-// Initialize sync on module load
-initializeSyncStatus();
+// Initialize sync on module load - moved to App.tsx to ensure proper initialization order

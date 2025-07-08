@@ -13,7 +13,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "deploy": "./deploy.sh",
+    "deploy": "./scripts/deploy.sh",
     "deploy:git": "./scripts/deploy-git.sh",
     "deploy:vercel": "./scripts/deploy-vercel.sh",
     "deploy:netlify": "./scripts/deploy-netlify.sh",
@@ -27,7 +27,8 @@
     "pnpm": "^10.12.3",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

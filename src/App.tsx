@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navigation } from './components/Navigation';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { Dashboard } from './components/Dashboard';
-import { FarmersManager } from './components/FarmersManager';
-import { CropsManager } from './components/CropsManager';
-import { LandsManager } from './components/LandsManager';
-import { TransactionsManager } from './components/TransactionsManager';
-import { ReportsManager } from './components/ReportsManager';
-import { AnalyticsManager } from './components/AnalyticsManager';
-import { SettingsManager } from './components/SettingsManager';
+import { AuthPage } from './components/auth/AuthPage';
+import { EmailVerificationPage } from './components/auth/EmailVerificationPage';
+import { EmailVerificationBanner } from './components/auth/EmailVerificationBanner';
+
+// Lazy load heavy components
+const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
+const FarmersManager = lazy(() => import('./components/FarmersManager').then(module => ({ default: module.FarmersManager })));
+const CropsManager = lazy(() => import('./components/CropsManager').then(module => ({ default: module.CropsManager })));
+const LandsManager = lazy(() => import('./components/LandsManager').then(module => ({ default: module.LandsManager })));
+const TransactionsManager = lazy(() => import('./components/TransactionsManager').then(module => ({ default: module.TransactionsManager })));
+const ReportsManager = lazy(() => import('./components/ReportsManager').then(module => ({ default: module.ReportsManager })));
+const AnalyticsManager = lazy(() => import('./components/AnalyticsManager').then(module => ({ default: module.AnalyticsManager })));
+const SettingsManager = lazy(() => import('./components/SettingsManager').then(module => ({ default: module.SettingsManager })));
+const UserManager = lazy(() => import('./components/UserManager').then(module => ({ default: module.UserManager })));
 import type { Farmer, Land, Crop, Transaction, SyncStatus, LoadingState } from './types';
 import { 
   farmerOperations, 
@@ -35,7 +43,8 @@ import {
   syncFarmers,
   syncLands,
   syncCrops,
-  syncTransactions
+  syncTransactions,
+  initializeSyncStatus
 } from './utils/sync';
 
 // Sample data for initial setup (used when no Supabase config or offline)
@@ -199,6 +208,8 @@ const initialTransactions: Transaction[] = [
 ];
 
 function App() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -240,6 +251,9 @@ function App() {
       console.log('Initializing AgriTracker app...');
       
       try {
+        // Initialize sync status first
+        initializeSyncStatus();
+        
         const config = getSupabaseConfig();
         console.log('Supabase config:', { isConfigured: config.isConfigured });
         
@@ -259,18 +273,47 @@ function App() {
         } else {
           console.log('Loading data from Supabase...');
           // Load local data first for immediate display
-          setFarmers(getLocalFarmers());
-          setLands(getLocalLands());
-          setCrops(getLocalCrops());
-          setTransactions(getLocalTransactions());
+          const localFarmers = getLocalFarmers();
+          const localLands = getLocalLands();
+          const localCrops = getLocalCrops();
+          const localTransactions = getLocalTransactions();
           
-          // Then sync with server
-          await loadAllData();
+          setFarmers(localFarmers);
+          setLands(localLands);
+          setCrops(localCrops);
+          setTransactions(localTransactions);
+          
+          // Set initial loading states based on local data availability
+          const hasLocalData = localFarmers.length > 0 || localLands.length > 0 || localCrops.length > 0 || localTransactions.length > 0;
+          const timestamp = hasLocalData ? new Date().toISOString() : null;
+          
+          setFarmersLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
+          setLandsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
+          setCropsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
+          setTransactionsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
+          
+          // Only sync if we don't have local data or in background
+          if (!hasLocalData) {
+            await loadAllData();
+          } else {
+            // Background sync if we have local data
+            setTimeout(() => loadAllData(), 1000);
+          }
         }
         
         console.log('App initialization complete');
       } catch (error) {
         console.error('Error initializing app:', error);
+        // Set error states for all loading states
+        const errorState = {
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'Failed to initialize app',
+          lastUpdated: null
+        };
+        setFarmersLoading(errorState);
+        setLandsLoading(errorState);
+        setCropsLoading(errorState);
+        setTransactionsLoading(errorState);
       } finally {
         setIsInitializing(false);
       }
@@ -278,28 +321,25 @@ function App() {
 
     initializeApp();
     
-    // Start auto-sync
-    startAutoSync(5); // Every 5 minutes
+    // Start auto-sync after initialization
+    const autoSyncTimeout = setTimeout(() => {
+      startAutoSync(5); // Every 5 minutes
+    }, 1000);
     
     // Listen to sync status changes
     addSyncStatusListener(setSyncStatus);
     
     return () => {
       removeSyncStatusListener(setSyncStatus);
+      clearTimeout(autoSyncTimeout);
     };
   }, []);
 
   // Load all data from server
   const loadAllData = async () => {
     try {
-      const [farmersResult, landsResult, cropsResult, transactionsResult] = await Promise.all([
-        syncFarmers(),
-        syncLands(),
-        syncCrops(),
-        syncTransactions()
-      ]);
-
-      // Update farmers
+      // Load data sequentially to avoid race conditions
+      const farmersResult = await syncFarmers();
       setFarmers(farmersResult.data);
       setFarmersLoading({
         isLoading: farmersResult.isLoading,
@@ -307,7 +347,7 @@ function App() {
         lastUpdated: farmersResult.lastUpdated
       });
 
-      // Update lands
+      const landsResult = await syncLands();
       setLands(landsResult.data);
       setLandsLoading({
         isLoading: landsResult.isLoading,
@@ -315,7 +355,7 @@ function App() {
         lastUpdated: landsResult.lastUpdated
       });
 
-      // Update crops
+      const cropsResult = await syncCrops();
       setCrops(cropsResult.data);
       setCropsLoading({
         isLoading: cropsResult.isLoading,
@@ -323,7 +363,7 @@ function App() {
         lastUpdated: cropsResult.lastUpdated
       });
 
-      // Update transactions
+      const transactionsResult = await syncTransactions();
       setTransactions(transactionsResult.data);
       setTransactionsLoading({
         isLoading: transactionsResult.isLoading,
@@ -332,6 +372,16 @@ function App() {
       });
     } catch (error) {
       console.error('Failed to load data:', error);
+      // Set error states for all loading states
+      const errorState = {
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to load data',
+        lastUpdated: null
+      };
+      setFarmersLoading(errorState);
+      setLandsLoading(errorState);
+      setCropsLoading(errorState);
+      setTransactionsLoading(errorState);
     }
   };
 
@@ -629,10 +679,34 @@ function App() {
         );
       case 'settings':
         return <SettingsManager />;
+      case 'users':
+        return <UserManager />;
       default:
         return <div className="p-6">Page not found</div>;
     }
   };
+
+  // Handle special routes first
+  if (location.pathname === '/auth/verify') {
+    return <EmailVerificationPage />;
+  }
+
+  // Show auth page if not authenticated
+  if (!isAuthenticated && !authLoading) {
+    return <AuthPage />;
+  }
+
+  // Show loading screen during auth check or app initialization
+  if (authLoading || isInitializing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading AgriTracker...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -684,7 +758,20 @@ function App() {
             <div className="flex-1 flex items-center justify-center">
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500"></div>
             </div>
-          ) : renderContent()}
+          ) : (
+            <>
+              {/* Email Verification Banner */}
+              <EmailVerificationBanner className="m-6 mb-4" />
+              <Suspense fallback={
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
+                  <span className="ml-3 text-glass">Loading...</span>
+                </div>
+              }>
+                {renderContent()}
+              </Suspense>
+            </>
+          )}
         </div>
       </div>
       
@@ -697,11 +784,13 @@ function App() {
   );
 }
 
-// Wrapper component with ThemeProvider
+// Wrapper component with ThemeProvider and AuthProvider
 function AppWithTheme() {
   return (
     <ThemeProvider>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

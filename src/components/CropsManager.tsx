@@ -32,11 +32,11 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
     notes: ''
   });
 
-  const barangays = [...new Set(farmers.map(f => f.barangay))].sort();
+  const barangays = [...new Set((farmers || []).map(f => f.barangay))].sort();
 
-  const filteredCrops = crops.filter(crop => {
-    const farmer = farmers.find(f => f.id === crop.farmerId);
-    const land = lands.find(l => l.id === crop.landId);
+  const filteredCrops = (crops || []).filter(crop => {
+    const farmer = (farmers || []).find(f => f.id === crop.farmerId);
+    const land = (lands || []).find(l => l.id === crop.landId);
     
     const matchesSearch = 
       crop.cropType.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,7 +109,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
   };
 
   const getFarmerLands = (farmerId: string) => {
-    return lands.filter(land => land.farmerId === farmerId);
+    return (lands || []).filter(land => land.farmerId === farmerId);
   };
 
   const getStatusColor = (status: string) => {
@@ -178,8 +178,8 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
       {/* Crops Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredCrops.map(crop => {
-          const farmer = farmers.find(f => f.id === crop.farmerId);
-          const land = lands.find(l => l.id === crop.landId);
+          const farmer = (farmers || []).find(f => f.id === crop.farmerId);
+          const land = (lands || []).find(l => l.id === crop.landId);
           
           return (
             <div key={crop.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
@@ -259,7 +259,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm lg:text-base"
                     >
                       <option value="">Select Farmer</option>
-                      {farmers.map(farmer => (
+                      {(farmers || []).map(farmer => (
                         <option key={farmer.id} value={farmer.id}>
                           {farmer.firstName} {farmer.lastName}
                         </option>

@@ -10,10 +10,14 @@ import {
   Settings,
   Wifi,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  Shield,
+  LogOut,
+  UserCircle
 } from 'lucide-react';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { SyncStatus as SyncStatusComponent } from './SyncStatus';
+import { useAuth } from '../contexts/AuthContext';
 import type { SyncStatus } from '../types';
 
 interface NavigationProps {
@@ -25,7 +29,18 @@ interface NavigationProps {
 }
 
 export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClose, onManualSync }: NavigationProps) {
-  const menuItems = [
+  const { user, logout } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      if (onMobileMenuClose) onMobileMenuClose();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const baseMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, emoji: '🏠' },
     { id: 'farmers', label: 'Farmers', icon: Users, emoji: '👨‍🌾' },
     { id: 'lands', label: 'Lands', icon: MapPin, emoji: '🏞️' },
@@ -34,6 +49,16 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
     { id: 'reports', label: 'Reports', icon: FileText, emoji: '📊' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, emoji: '📈' },
     { id: 'settings', label: 'Settings', icon: Settings, emoji: '⚙️' }
+  ];
+
+  // Add user management for admins and managers
+  const adminMenuItems = [
+    { id: 'users', label: 'User Management', icon: Shield, emoji: '👥' },
+  ];
+
+  const menuItems = [
+    ...baseMenuItems,
+    ...(user?.role === 'admin' || user?.role === 'manager' ? adminMenuItems : [])
   ];
 
   const handleSync = () => {
@@ -144,6 +169,44 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
         {/* Enhanced Sync Status */}
         <div className="mt-4">
           <SyncStatusComponent className="bg-white/5 border-white/10" />
+        </div>
+
+        {/* User Profile Section */}
+        <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+          <div className="flex items-center space-x-3 mb-3">
+            {user?.profilePicture ? (
+              <img 
+                src={user.profilePicture} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center">
+                <UserCircle className="w-6 h-6 text-white" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-glass-muted truncate">
+                {user?.email}
+              </p>
+              <div className="flex items-center space-x-1 mt-1">
+                <Shield className="w-3 h-3 text-amber-400" />
+                <span className="text-xs text-amber-400 capitalize">
+                  {user?.role}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-red-300 hover:text-red-200 hover:bg-red-900/20 rounded-lg transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
       

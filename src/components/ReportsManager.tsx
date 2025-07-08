@@ -18,14 +18,18 @@ export function ReportsManager({ farmers, lands, crops, transactions }: ReportsM
   });
 
   const reportData = useMemo(() => {
-    const filteredTransactions = transactions.filter(t => {
+    const safeTransactions = transactions || [];
+    const safeCrops = crops || [];
+    const safeFarmers = farmers || [];
+    
+    const filteredTransactions = safeTransactions.filter(t => {
       const transactionDate = new Date(t.transactionDate);
       const start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
       return transactionDate >= start && transactionDate <= end;
     });
 
-    const filteredCrops = crops.filter(c => {
+    const filteredCrops = safeCrops.filter(c => {
       if (!c.actualHarvestDate) return false;
       const harvestDate = new Date(c.actualHarvestDate);
       const start = new Date(dateRange.startDate);
@@ -48,7 +52,7 @@ export function ReportsManager({ farmers, lands, crops, transactions }: ReportsM
       return acc;
     }, {} as Record<string, number>);
 
-    const barangayStats = farmers.reduce((acc, farmer) => {
+    const barangayStats = safeFarmers.reduce((acc, farmer) => {
       const farmerCrops = filteredCrops.filter(c => c.farmerId === farmer.id);
       const farmerRevenue = filteredTransactions
         .filter(t => t.farmerId === farmer.id && t.type === 'sale')
@@ -249,7 +253,7 @@ export function ReportsManager({ farmers, lands, crops, transactions }: ReportsM
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {reportData.filteredTransactions.slice(0, 20).map((transaction) => {
-              const farmer = farmers.find(f => f.id === transaction.farmerId);
+              const farmer = (farmers || []).find(f => f.id === transaction.farmerId);
               return (
                 <tr key={transaction.id}>
                   <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">

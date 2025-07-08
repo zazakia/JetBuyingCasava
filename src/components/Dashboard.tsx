@@ -4,22 +4,28 @@ import { Line, Doughnut } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
 interface DashboardProps {
-  farmers: Farmer[];
-  lands: Land[];
-  crops: Crop[];
-  transactions: Transaction[];
+  farmers?: Farmer[];
+  lands?: Land[];
+  crops?: Crop[];
+  transactions?: Transaction[];
 }
 
 export function Dashboard({ farmers, lands, crops, transactions }: DashboardProps) {
+  // Ensure all props have default values to prevent undefined access
+  const safeFarmers = farmers || [];
+  const safeLands = lands || [];
+  const safeCrops = crops || [];
+  const safeTransactions = transactions || [];
+
   const stats = useMemo(() => {
-    const totalFarmers = farmers.length;
-    const activeFarmers = farmers.filter(f => f.isActive).length;
-    const totalLands = lands.length;
-    const totalArea = lands.reduce((sum, land) => sum + land.area, 0);
-    const totalCrops = crops.length;
-    const harvestedCrops = crops.filter(c => c.status === 'harvested').length;
-    const totalHarvest = crops.reduce((sum, crop) => sum + (crop.actualYield || 0), 0);
-    const totalRevenue = transactions
+    const totalFarmers = safeFarmers.length;
+    const activeFarmers = safeFarmers.filter(f => f.isActive).length;
+    const totalLands = safeLands.length;
+    const totalArea = safeLands.reduce((sum, land) => sum + land.area, 0);
+    const totalCrops = safeCrops.length;
+    const harvestedCrops = safeCrops.filter(c => c.status === 'harvested').length;
+    const totalHarvest = safeCrops.reduce((sum, crop) => sum + (crop.actualYield || 0), 0);
+    const totalRevenue = safeTransactions
       .filter(t => t.type === 'sale')
       .reduce((sum, t) => sum + t.totalAmount, 0);
 
@@ -33,11 +39,11 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
       totalHarvest,
       totalRevenue
     };
-  }, [farmers, lands, crops, transactions]);
+  }, [safeFarmers, safeLands, safeCrops, safeTransactions]);
 
   const chartData = useMemo(() => {
     // Crop status distribution
-    const cropStatusData = crops.reduce((acc, crop) => {
+    const cropStatusData = safeCrops.reduce((acc, crop) => {
       acc[crop.status] = (acc[crop.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -48,7 +54,7 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
       date.setMonth(date.getMonth() - i);
       const monthName = date.toLocaleString('default', { month: 'short' });
       
-      const monthCrops = crops.filter(crop => {
+      const monthCrops = safeCrops.filter(crop => {
         if (!crop.actualHarvestDate) return false;
         const harvestDate = new Date(crop.actualHarvestDate);
         return harvestDate.getMonth() === date.getMonth() && 
@@ -62,7 +68,7 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
     }).reverse();
 
     // Barangay distribution
-    const barangayData = farmers.reduce((acc, farmer) => {
+    const barangayData = safeFarmers.reduce((acc, farmer) => {
       acc[farmer.barangay] = (acc[farmer.barangay] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -72,7 +78,7 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
       monthlyHarvest,
       barangayData
     };
-  }, [crops, farmers]);
+  }, [safeCrops, safeFarmers]);
 
   const StatCard = ({ title, value, subtitle, icon: Icon, color, emoji }: any) => (
     <div className="glass-card rounded-xl p-4 lg:p-6 hover:bg-amber-900/25 transition-all duration-300 animate-float">
@@ -149,19 +155,20 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
             <h3 className="text-lg font-semibold text-glass">Crop Growth Distribution</h3>
           </div>
           <div className="h-64 animate-plant-grow">
-            <Doughnut
-              data={{
-                labels: Object.keys(chartData.cropStatusData).map(status => {
-                  const statusMap = {
-                    planted: '🌰 Planted',
-                    growing: '🌿 Growing', 
-                    ready: '🌾 Ready',
-                    harvested: '🚜 Harvested'
-                  };
-                  return statusMap[status as keyof typeof statusMap] || status.charAt(0).toUpperCase() + status.slice(1);
-                }),
-                datasets: [{
-                  data: Object.values(chartData.cropStatusData),
+            {Object.keys(chartData.cropStatusData).length > 0 ? (
+              <Doughnut
+                data={{
+                  labels: Object.keys(chartData.cropStatusData).map(status => {
+                    const statusMap = {
+                      planted: '🌰 Planted',
+                      growing: '🌿 Growing', 
+                      ready: '🌾 Ready',
+                      harvested: '🚜 Harvested'
+                    };
+                    return statusMap[status as keyof typeof statusMap] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown');
+                  }),
+                  datasets: [{
+                    data: Object.values(chartData.cropStatusData),
                   backgroundColor: [
                     'rgba(217, 119, 6, 0.8)',   // amber for planted
                     'rgba(34, 197, 94, 0.8)',   // green for growing
@@ -197,7 +204,12 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
                   duration: 2000
                 }
               }}
-            />
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-glass-muted">
+                <p>No crop data available</p>
+              </div>
+            )}
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium status-planted border">
@@ -309,8 +321,8 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
           <span className="text-lg animate-sprout">🌾</span>
         </div>
         <div className="space-y-3">
-          {transactions.slice(0, 5).map((transaction) => {
-            const farmer = farmers.find(f => f.id === transaction.farmerId);
+          {safeTransactions.slice(0, 5).map((transaction) => {
+            const farmer = safeFarmers.find(f => f.id === transaction.farmerId);
             const produceEmoji = {
               'Rice': '🌾',
               'Corn': '🌽', 
@@ -350,7 +362,7 @@ export function Dashboard({ farmers, lands, crops, transactions }: DashboardProp
                 </div>
               </div>
             );
-          })}
+          }).filter(Boolean)}
         </div>
       </div>
     </div>

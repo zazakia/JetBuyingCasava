@@ -25,10 +25,10 @@ export function LandsManager({ lands, farmers, onAddLand }: LandsManagerProps) {
     dateAcquired: ''
   });
 
-  const barangays = [...new Set(farmers.map(f => f.barangay))].sort();
+  const barangays = [...new Set((farmers || []).map(f => f.barangay))].sort();
 
-  const filteredLands = lands.filter(land => {
-    const farmer = farmers.find(f => f.id === land.farmerId);
+  const filteredLands = (lands || []).filter(land => {
+    const farmer = (farmers || []).find(f => f.id === land.farmerId);
     
     const matchesSearch = 
       land.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,7 +113,7 @@ export function LandsManager({ lands, farmers, onAddLand }: LandsManagerProps) {
       {/* Lands Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredLands.map(land => {
-          const farmer = farmers.find(f => f.id === land.farmerId);
+          const farmer = (farmers || []).find(f => f.id === land.farmerId);
           
           return (
             <div key={land.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
@@ -181,7 +181,7 @@ export function LandsManager({ lands, farmers, onAddLand }: LandsManagerProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm lg:text-base"
                     >
                       <option value="">Select Farmer</option>
-                      {farmers.map(farmer => (
+                      {(farmers || []).map(farmer => (
                         <option key={farmer.id} value={farmer.id}>
                           {farmer.firstName} {farmer.lastName}
                         </option>
