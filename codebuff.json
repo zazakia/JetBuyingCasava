@@ -1,0 +1,16 @@
+{
+  "description": "Template configuration for this project. See https://www.codebuff.com/config for all options.",
+  "startupProcesses": [
+    {
+      "name": "dev",
+      "command": "pnpm run dev",
+      "stdoutFile": "logs/dev.log"
+    }
+  ],
+  "fileChangeHooks": [
+    {
+      "name": "lint",
+      "command": "pnpm run lint"
+    }
+  ]
+}

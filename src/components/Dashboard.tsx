@@ -10,7 +10,7 @@ interface DashboardProps {
   transactions?: Transaction[];
 }
 
-export function Dashboard({ farmers, lands, crops, transactions }: DashboardProps) {
+export function Dashboard({ farmers = [], lands = [], crops = [], transactions = [] }: DashboardProps) {
   // Ensure all props have default values to prevent undefined access
   const safeFarmers = farmers || [];
   const safeLands = lands || [];

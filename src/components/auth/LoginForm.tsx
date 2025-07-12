@@ -61,6 +61,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+        {/* Move error message to the top */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm">{error}</p>
+          </div>
+        )}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <LogIn className="w-8 h-8 text-white" />
@@ -68,12 +74,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
           <p className="text-gray-600">Sign in to your AgriTracker account</p>
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -85,6 +85,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 value={credentials.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
@@ -108,6 +109,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={credentials.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
@@ -160,6 +162,30 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
               </div>
             ) : (
               'Sign In'
+            )}
+          </button>
+
+          {/* Demo Mode Button */}
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={async () => {
+              clearError();
+              try {
+                await login({ email: 'admin@example.com', password: 'admin123456' });
+              } catch (e) {
+                // Error handled by context
+              }
+            }}
+            className="w-full mt-2 bg-gradient-to-r from-gray-400 to-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:from-gray-500 hover:to-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Signing in as Demo...
+              </div>
+            ) : (
+              'Demo Mode'
             )}
           </button>
         </form>

@@ -34,6 +34,13 @@ export const getSupabaseClient = (): SupabaseClient | null => {
   const config = getSupabaseConfig();
   
   if (!config.isConfigured) {
+    console.log('Supabase not configured - running in offline mode');
+    return null;
+  }
+
+  // Basic URL validation
+  if (!config.url.toLowerCase().includes('supabase.co') && !config.url.includes('localhost')) {
+    console.error('Invalid Supabase URL format:', config.url);
     return null;
   }
 

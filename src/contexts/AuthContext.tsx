@@ -30,28 +30,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const client = getSupabaseClient();
 
-  // Transform Supabase user + profile to our User type
-  const transformUser = (supabaseUser: SupabaseUser, profile: UserProfile): User => ({
+  // Transform Supabase user to our User type (with fallback to user_metadata)
+  const transformUser = (supabaseUser: SupabaseUser, profile?: UserProfile): User => ({
     id: supabaseUser.id,
     email: supabaseUser.email || '',
-    firstName: profile.first_name || '',
-    lastName: profile.last_name || '',
-    role: profile.role,
-    isActive: profile.is_active,
-    profilePicture: profile.profile_picture,
-    phone: profile.phone,
-    organization: profile.organization,
-    createdAt: profile.created_at,
-    lastLoginAt: profile.last_login_at
+    firstName: profile?.first_name || supabaseUser.user_metadata?.first_name || '',
+    lastName: profile?.last_name || supabaseUser.user_metadata?.last_name || '',
+    role: profile?.role || supabaseUser.user_metadata?.role || 'user',
+    isActive: profile?.is_active ?? true,
+    profilePicture: profile?.profile_picture || supabaseUser.user_metadata?.profile_picture,
+    phone: profile?.phone || supabaseUser.user_metadata?.phone,
+    organization: profile?.organization || supabaseUser.user_metadata?.organization,
+    createdAt: profile?.created_at || supabaseUser.created_at,
+    lastLoginAt: profile?.last_login_at || supabaseUser.last_sign_in_at
   });
 
-  // Fetch user profile from our custom table
+  // Fetch user profile from members table
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     if (!client) return null;
 
     try {
       const { data, error } = await client
-        .from('jetagritracker.user_profiles')
+        .from('members')
         .select('*')
         .eq('user_id', userId)
         .single();
@@ -61,7 +61,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      return data as UserProfile;
+      // Transform members table data to UserProfile format
+      const profile: UserProfile = {
+        id: data.id,
+        user_id: data.user_id,
+        first_name: data.name?.split(' ')[0] || '',
+        last_name: data.name?.split(' ')[1] || '',
+        role: data.role === 'admin' ? 'admin' : data.role === 'manager' ? 'manager' : 'user',
+        is_active: data.status === 'active' || data.status === 'pending',
+        profile_picture: undefined,
+        phone: undefined,
+        organization: undefined,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        last_login_at: undefined
+      };
+
+      return profile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       return null;
@@ -71,6 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize auth state
   useEffect(() => {
     if (!client) {
+      console.log('No Supabase client available - running in offline mode');
       setIsLoading(false);
       return;
     }
@@ -88,12 +105,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         if (session?.user) {
-          const profile = await fetchUserProfile(session.user.id);
-          if (profile) {
-            setUser(transformUser(session.user, profile));
-          } else {
-            console.warn('No user profile found for user:', session.user.id);
-            setUser(null);
+          try {
+            const profile = await fetchUserProfile(session.user.id);
+            setUser(transformUser(session.user, profile || undefined));
+          } catch (error) {
+            console.warn('Profile fetch failed, using user metadata:', error);
+            setUser(transformUser(session.user));
           }
         }
       } catch (error) {
@@ -104,22 +121,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    getInitialSession();
+    // Add timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.warn('Auth initialization timed out - proceeding without auth');
+      setIsLoading(false);
+    }, 10000);
+
+    getInitialSession().finally(() => {
+      clearTimeout(timeoutId);
+    });
 
     // Listen for auth changes
     const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
         
-        if (session?.user) {
-          const profile = await fetchUserProfile(session.user.id);
-          if (profile) {
-            setUser(transformUser(session.user, profile));
-          } else {
-            console.warn('No user profile found for user:', session.user.id);
-            setUser(null);
+        if (session?.user && event !== 'TOKEN_REFRESHED') {
+          try {
+            const profile = await fetchUserProfile(session.user.id);
+            setUser(transformUser(session.user, profile || undefined));
+          } catch (error) {
+            console.warn('Profile fetch failed, using user metadata:', error);
+            setUser(transformUser(session.user));
           }
-        } else {
+        } else if (!session?.user) {
           setUser(null);
         }
         
@@ -150,12 +175,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
 
-      if (data.user) {
-        const profile = await fetchUserProfile(data.user.id);
-        if (profile) {
-          setUser(transformUser(data.user, profile));
-        }
-      }
+      // User will be set by auth state change listener
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setError(errorMessage);
@@ -166,7 +186,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (data: RegisterData): Promise<void> => {
+    console.log('Register function called with data:', data);
+    
     if (!client) {
+      console.error('No Supabase client available');
       throw new Error('Supabase not configured');
     }
 
@@ -174,6 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      console.log('Attempting to sign up user...');
       const { data: authData, error: authError } = await client.auth.signUp({
         email: data.email,
         password: data.password,
@@ -189,12 +213,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
+      console.log('Sign up response:', { authData, authError });
+
       if (authError) {
+        console.error('Auth error:', authError);
         throw authError;
       }
 
       // Profile will be created automatically by database trigger
       if (authData.user) {
+        console.log('User created successfully:', authData.user.id);
         // Mark that user just registered for auto-verification
         localStorage.setItem(`just_registered_${authData.user.id}`, 'true');
         
@@ -207,6 +235,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }, 1000);
       }
     } catch (error) {
+      console.error('Registration error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -259,13 +288,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       // Remove undefined values
-      const cleanData = Object.fromEntries(
-        Object.entries(updateData).filter(([, value]) => value !== undefined)
-      );
-
-      const { data, error } = await client
-        .from('jetagritracker.user_profiles')
-        .update(cleanData)
+      const { error } = await client
+        .from('members')
+        .update({
+          name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+          email: user.email,
+          role: profileData.role || 'member',
+          status: profileData.isActive ? 'active' : 'inactive'
+        })
         .eq('user_id', user.id)
         .select()
         .single();

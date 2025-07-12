@@ -99,7 +99,7 @@ export function AnalyticsManager({ farmers, lands, crops, transactions }: Analyt
       farmerPerformance,
       cropAnalysis
     };
-  }, [safeFarmers, safeLands, safeCrops, safeTransactions]);
+  }, [farmers, lands, crops, transactions]);
 
   const MetricCard = ({ title, value, change, icon: Icon, color }: any) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">

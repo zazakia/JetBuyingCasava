@@ -611,17 +611,17 @@ function App() {
       case 'dashboard':
         return (
           <Dashboard
-            farmers={farmers}
-            lands={lands}
-            crops={crops}
-            transactions={transactions}
+            farmers={farmers || []}
+            lands={lands || []}
+            crops={crops || []}
+            transactions={transactions || []}
           />
         );
       case 'farmers':
         return (
           <FarmersManager
-            farmers={farmers}
-            lands={lands}
+            farmers={farmers || []}
+            lands={lands || []}
             onAddFarmer={addFarmer}
             onUpdateFarmer={updateFarmer}
             onDeleteFarmer={deleteFarmer}
@@ -631,9 +631,9 @@ function App() {
       case 'crops':
         return (
           <CropsManager
-            crops={crops}
-            farmers={farmers}
-            lands={lands}
+            crops={crops || []}
+            farmers={farmers || []}
+            lands={lands || []}
             onAddCrop={addCrop}
             onUpdateCrop={updateCrop}
             loading={cropsLoading}
@@ -642,8 +642,8 @@ function App() {
       case 'lands':
         return (
           <LandsManager
-            lands={lands}
-            farmers={farmers}
+            lands={lands || []}
+            farmers={farmers || []}
             onAddLand={addLand}
             loading={landsLoading}
           />
@@ -651,9 +651,9 @@ function App() {
       case 'transactions':
         return (
           <TransactionsManager
-            transactions={transactions}
-            farmers={farmers}
-            crops={crops}
+            transactions={transactions || []}
+            farmers={farmers || []}
+            crops={crops || []}
             onAddTransaction={addTransaction}
             onUpdateTransaction={updateTransaction}
             loading={transactionsLoading}
@@ -662,19 +662,19 @@ function App() {
       case 'reports':
         return (
           <ReportsManager
-            farmers={farmers}
-            lands={lands}
-            crops={crops}
-            transactions={transactions}
+            farmers={farmers || []}
+            lands={lands || []}
+            crops={crops || []}
+            transactions={transactions || []}
           />
         );
       case 'analytics':
         return (
           <AnalyticsManager
-            farmers={farmers}
-            lands={lands}
-            crops={crops}
-            transactions={transactions}
+            farmers={farmers || []}
+            lands={lands || []}
+            crops={crops || []}
+            transactions={transactions || []}
           />
         );
       case 'settings':
