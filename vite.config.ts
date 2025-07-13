@@ -37,9 +37,7 @@ export default defineConfig({
         type: 'module',
         navigateFallback: 'index.html'
       },
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw-custom.js',
+      strategies: 'generateSW',
       includeManifestIcons: true,
       manifestFilename: 'manifest.json',
       useCredentials: true,

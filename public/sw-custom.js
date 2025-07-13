@@ -1,5 +1,8 @@
 // Service Worker for Offline Support and Background Sync
 
+// This line is required for Workbox to work with injectManifest
+self.__WB_MANIFEST;
+
 const CACHE_NAME = 'agritracker-v1';
 const API_CACHE_NAME = 'agritracker-api-v1';
 const OFFLINE_URL = '/offline.html';
