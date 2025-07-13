@@ -14,6 +14,7 @@ import type {
   OfflineAction,
   SyncResult
 } from '../types';
+import { syncQueue } from './syncQueue';
 
 let supabaseClient: SupabaseClient<Database> | null = null;
 
@@ -661,31 +662,290 @@ const fetchRecords = async <T, TDB>(
 
 // Specific CRUD operations for each entity
 export const farmerOperations = {
-  create: (farmer: Farmer) => createRecord('farmers', farmer, transformFarmerToDB, transformFarmerFromDB),
-  update: (id: string, farmer: Farmer) => updateRecord('farmers', id, farmer, transformFarmerToDB, transformFarmerFromDB),
-  delete: (id: string) => deleteRecord('farmers', id),
-  fetchAll: () => fetchRecords('farmers', transformFarmerFromDB)
+  create: async (farmer: Farmer) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      // Offline - add to sync queue
+      // Add to sync queue and get operation ID
+      const operationId = await syncQueue.addOperation({
+        type: 'CREATE',
+        table: 'farmers',
+        data: farmer,
+      });
+      return {
+        data: { ...farmer, id: operationId, _local: true } as Farmer,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return createRecord<Farmer, FarmerDB>('farmers', farmer, transformFarmerToDB, transformFarmerFromDB);
+  },
+  
+  update: async (id: string, farmer: Farmer) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      // Offline - add to sync queue
+      // Add to sync queue and get operation ID
+      await syncQueue.addOperation({
+        type: 'UPDATE',
+        table: 'farmers',
+        data: { ...farmer, id },
+      });
+      return {
+        data: { ...farmer, _local: true } as Farmer,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return updateRecord<Farmer, FarmerDB>('farmers', id, farmer, transformFarmerToDB, transformFarmerFromDB);
+  },
+  
+  delete: async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      // Offline - add to sync queue
+      // Add to sync queue and get operation ID
+      await syncQueue.addOperation({
+        type: 'DELETE',
+        table: 'farmers',
+        data: { id },
+      });
+      return {
+        data: true,
+        error: null,
+        status: 202,
+        statusText: 'Delete queued for sync',
+      };
+    }
+    return deleteRecord('farmers', id);
+  },
+  
+  fetchAll: async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      // Return local data when offline
+      const localFarmers = JSON.parse(localStorage.getItem('farmers') || '[]');
+      return {
+        data: localFarmers,
+        error: null,
+        status: 200,
+        statusText: 'OK (offline)',
+      };
+    }
+    return fetchRecords<Farmer, FarmerDB>('farmers', transformFarmerFromDB);
+  }
 };
 
 export const landOperations = {
-  create: (land: Land) => createRecord('lands', land, transformLandToDB, transformLandFromDB),
-  update: (id: string, land: Land) => updateRecord('lands', id, land, transformLandToDB, transformLandFromDB),
-  delete: (id: string) => deleteRecord('lands', id),
-  fetchAll: () => fetchRecords('lands', transformLandFromDB)
+  create: async (land: Land) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const operationId = await syncQueue.addOperation({
+        type: 'CREATE',
+        table: 'lands',
+        data: land,
+      });
+      return {
+        data: { ...land, id: operationId, _local: true } as Land,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return createRecord<Land, LandDB>('lands', land, transformLandToDB, transformLandFromDB);
+  },
+  
+  update: async (id: string, land: Land) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'UPDATE',
+        table: 'lands',
+        data: { ...land, id },
+      });
+      return {
+        data: { ...land, _local: true } as Land,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return updateRecord<Land, LandDB>('lands', id, land, transformLandToDB, transformLandFromDB);
+  },
+  
+  delete: async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'DELETE',
+        table: 'lands',
+        data: { id },
+      });
+      return {
+        data: true,
+        error: null,
+        status: 202,
+        statusText: 'Delete queued for sync',
+      };
+    }
+    return deleteRecord('lands', id);
+  },
+  
+  fetchAll: async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const localLands = JSON.parse(localStorage.getItem('lands') || '[]');
+      return {
+        data: localLands,
+        error: null,
+        status: 200,
+        statusText: 'OK (offline)',
+      };
+    }
+    return fetchRecords<Land, LandDB>('lands', transformLandFromDB);
+  }
 };
 
 export const cropOperations = {
-  create: (crop: Crop) => createRecord('crops', crop, transformCropToDB, transformCropFromDB),
-  update: (id: string, crop: Crop) => updateRecord('crops', id, crop, transformCropToDB, transformCropFromDB),
-  delete: (id: string) => deleteRecord('crops', id),
-  fetchAll: () => fetchRecords('crops', transformCropFromDB)
+  create: async (crop: Crop) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const operationId = await syncQueue.addOperation({
+        type: 'CREATE',
+        table: 'crops',
+        data: crop,
+      });
+      return {
+        data: { ...crop, id: operationId, _local: true } as Crop,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return createRecord<Crop, CropDB>('crops', crop, transformCropToDB, transformCropFromDB);
+  },
+  
+  update: async (id: string, crop: Crop) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'UPDATE',
+        table: 'crops',
+        data: { ...crop, id },
+      });
+      return {
+        data: { ...crop, _local: true } as Crop,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return updateRecord<Crop, CropDB>('crops', id, crop, transformCropToDB, transformCropFromDB);
+  },
+  
+  delete: async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'DELETE',
+        table: 'crops',
+        data: { id },
+      });
+      return {
+        data: true,
+        error: null,
+        status: 202,
+        statusText: 'Delete queued for sync',
+      };
+    }
+    return deleteRecord('crops', id);
+  },
+  
+  fetchAll: async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const localCrops = JSON.parse(localStorage.getItem('crops') || '[]');
+      return {
+        data: localCrops,
+        error: null,
+        status: 200,
+        statusText: 'OK (offline)',
+      };
+    }
+    return fetchRecords<Crop, CropDB>('crops', transformCropFromDB);
+  }
 };
 
 export const transactionOperations = {
-  create: (transaction: Transaction) => createRecord('transactions', transaction, transformTransactionToDB, transformTransactionFromDB),
-  update: (id: string, transaction: Transaction) => updateRecord('transactions', id, transaction, transformTransactionToDB, transformTransactionFromDB),
-  delete: (id: string) => deleteRecord('transactions', id),
-  fetchAll: () => fetchRecords('transactions', transformTransactionFromDB)
+  create: async (transaction: Transaction) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const operationId = await syncQueue.addOperation({
+        type: 'CREATE',
+        table: 'transactions',
+        data: transaction,
+      });
+      return {
+        data: { ...transaction, id: operationId, _local: true } as Transaction,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return createRecord<Transaction, TransactionDB>('transactions', transaction, transformTransactionToDB, transformTransactionFromDB);
+  },
+  
+  update: async (id: string, transaction: Transaction) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'UPDATE',
+        table: 'transactions',
+        data: { ...transaction, id },
+      });
+      return {
+        data: { ...transaction, _local: true } as Transaction,
+        error: null,
+        status: 202,
+        statusText: 'Queued for sync',
+      };
+    }
+    return updateRecord<Transaction, TransactionDB>('transactions', id, transaction, transformTransactionToDB, transformTransactionFromDB);
+  },
+  
+  delete: async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      await syncQueue.addOperation({
+        type: 'DELETE',
+        table: 'transactions',
+        data: { id },
+      });
+      return {
+        data: true,
+        error: null,
+        status: 202,
+        statusText: 'Delete queued for sync',
+      };
+    }
+    return deleteRecord('transactions', id);
+  },
+  
+  fetchAll: async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const localTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      return {
+        data: localTransactions,
+        error: null,
+        status: 200,
+        statusText: 'OK (offline)',
+      };
+    }
+    return fetchRecords<Transaction, TransactionDB>('transactions', transformTransactionFromDB);
+  }
 };
 
 // Sync functionality

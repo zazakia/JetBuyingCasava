@@ -84,57 +84,88 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Track initialization state to prevent multiple initializations
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Initialize auth state
   useEffect(() => {
-    if (!client) {
-      console.log('No Supabase client available - running in offline mode');
-      setIsLoading(false);
+    if (!client || isInitialized) {
+      console.log('Auth already initialized or no client - skipping initialization');
       return;
     }
 
-    // Get initial session
-    const getInitialSession = async () => {
+    console.log('Starting auth initialization...');
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // Get initial session with retry logic
+    const getInitialSession = async (attempt = 1) => {
+      if (!isMounted) return;
+      
       try {
+        console.log(`Auth initialization attempt ${attempt}...`);
         const { data: { session }, error } = await client.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
-          setError(error.message);
-          setIsLoading(false);
-          return;
+          throw error;
         }
 
         if (session?.user) {
           try {
             const profile = await fetchUserProfile(session.user.id);
-            setUser(transformUser(session.user, profile || undefined));
-          } catch (error) {
-            console.warn('Profile fetch failed, using user metadata:', error);
-            setUser(transformUser(session.user));
+            if (isMounted) {
+              setUser(transformUser(session.user, profile || undefined));
+              console.log('Auth initialized with user:', session.user.email);
+            }
+          } catch (profileError) {
+            console.warn('Profile fetch failed, using user metadata:', profileError);
+            if (isMounted) {
+              setUser(transformUser(session.user));
+            }
           }
+        } else if (isMounted) {
+          console.log('No active session found');
+          setUser(null);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-        setError(error instanceof Error ? error.message : 'Unknown error');
+        
+        // Retry logic (max 3 attempts)
+        if (attempt < 3) {
+          const retryDelay = attempt * 2000; // Exponential backoff
+          console.log(`Retrying auth initialization in ${retryDelay}ms...`);
+          setTimeout(() => getInitialSession(attempt + 1), retryDelay);
+          return;
+        }
+        
+        if (isMounted) {
+          setError('Failed to initialize authentication. Please refresh the page or check your connection.');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
       }
     };
 
-    // Add timeout to prevent hanging
-    const timeoutId = setTimeout(() => {
-      console.warn('Auth initialization timed out - proceeding without auth');
-      setIsLoading(false);
-    }, 10000);
+    // Set a generous timeout for the initial auth check (30 seconds)
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth initialization taking longer than expected...');
+        // Don't set error here, let the retry logic handle it
+      }
+    }, 30000);
 
-    getInitialSession().finally(() => {
-      clearTimeout(timeoutId);
-    });
+    // Start the initialization
+    getInitialSession();
 
-    // Listen for auth changes
+    // Listen for auth changes (only set up once)
     const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
+        
+        if (!isMounted) return;
         
         if (session?.user && event !== 'TOKEN_REFRESHED') {
           try {
@@ -147,10 +178,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else if (!session?.user) {
           setUser(null);
         }
-        
-        setIsLoading(false);
       }
     );
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription?.unsubscribe();
+    };
 
     return () => {
       subscription.unsubscribe();

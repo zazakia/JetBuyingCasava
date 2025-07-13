@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, Clock, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
+import { syncQueue, getSyncStatus, SyncOperation } from '../utils/syncQueue';
 
 interface SyncStatusData {
   table_name: string;
@@ -22,28 +23,64 @@ export function SyncStatus({ className = '', showDetails = false }: SyncStatusPr
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [queueStatus, setQueueStatus] = useState({
+    pendingCount: 0,
+    failedCount: 0,
+    total: 0,
+    lastSync: null as number | null,
+  });
+  const [operations, setOperations] = useState<SyncOperation[]>([]);
 
-  // Monitor online status
+  // Monitor online status and sync queue
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Trigger sync when coming back online
+      syncQueue.processQueue();
+    };
+    
     const handleOffline = () => setIsOnline(false);
 
+    // Subscribe to sync queue updates
+    const unsubscribe = syncQueue.addSyncListener(updateQueueStatus);
+    
+    // Initial status update
+    updateQueueStatus();
+    
+    // Set up event listeners
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      unsubscribe();
     };
   }, []);
 
-  // Fetch sync status
+  // Update queue status from sync queue
+  const updateQueueStatus = () => {
+    const status = getSyncStatus();
+    setQueueStatus(status);
+    setOperations(syncQueue.getQueue());
+    
+    // Update last update timestamp
+    setLastUpdate(new Date());
+  };
+
+  // Fetch sync status from server
   const fetchSyncStatus = async () => {
     const client = getSupabaseClient();
-    if (!client || !isOnline) return;
+    if (!client) return;
 
     setIsLoading(true);
     try {
+      if (!isOnline) {
+        // Use local queue status when offline
+        updateQueueStatus();
+        return;
+      }
+
       const { data, error } = await client
         .from('JetAgriTracker.sync_status_view')
         .select('*');
@@ -113,39 +150,30 @@ export function SyncStatus({ className = '', showDetails = false }: SyncStatusPr
 
   // Detailed view for settings/dashboard
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Sync Status</h3>
-          <div className="flex items-center space-x-2">
-            <div className={`flex items-center space-x-1 ${getSyncStatusColor()}`}>
-              {getSyncStatusIcon()}
-              <span className="text-sm font-medium">{getSyncStatusText()}</span>
-            </div>
-            <button
-              onClick={fetchSyncStatus}
-              disabled={isLoading || !isOnline}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              title="Refresh sync status"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
-        
-        {/* Connection Status */}
-        <div className="mt-2 flex items-center space-x-2">
+    <div className={`p-4 rounded-lg bg-white shadow ${className}`}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Synchronization Status</h3>
+        <div className="flex items-center space-x-4">
           {isOnline ? (
-            <div className="flex items-center space-x-1 text-green-600">
-              <Wifi className="w-3 h-3" />
-              <span className="text-xs">Online</span>
+            <div className="flex items-center text-green-600">
+              <Wifi className="w-4 h-4 mr-1" />
+              <span className="text-sm">Online</span>
             </div>
           ) : (
-            <div className="flex items-center space-x-1 text-red-600">
-              <WifiOff className="w-3 h-3" />
-              <span className="text-xs">Offline</span>
+            <div className="flex items-center text-yellow-600">
+              <WifiOff className="w-4 h-4 mr-1" />
+              <span className="text-sm">Offline</span>
             </div>
           )}
+          
+          <button
+            onClick={fetchSyncStatus}
+            disabled={isLoading || !isOnline}
+            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+            title="Refresh sync status"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
           
           {lastUpdate && (
             <span className="text-xs text-gray-500">
@@ -175,6 +203,80 @@ export function SyncStatus({ className = '', showDetails = false }: SyncStatusPr
             <div className="text-sm text-gray-600">Failed</div>
           </div>
         </div>
+      </div>
+
+      {/* Sync Queue Status */}
+      <div className="p-4 border-b border-gray-200">
+        <h4 className="text-sm font-medium text-gray-900 mb-3">Sync Queue</h4>
+        {queueStatus.total === 0 ? (
+          <div className="text-center py-4 text-gray-500">
+            <CheckCircle className="w-6 h-6 mx-auto text-green-500 mb-2" />
+            <p>No pending sync operations</p>
+            <p className="text-xs text-gray-400 mt-1">Changes will be synced automatically when online</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium">
+                {queueStatus.pendingCount > 0 && (
+                  <span className="text-yellow-600">{queueStatus.pendingCount} pending</span>
+                )}
+                {queueStatus.pendingCount > 0 && queueStatus.failedCount > 0 && (
+                  <span className="mx-2 text-gray-300">•</span>
+                )}
+                {queueStatus.failedCount > 0 && (
+                  <span className="text-red-600">{queueStatus.failedCount} failed</span>
+                )}
+              </div>
+              {isOnline && (
+                <button
+                  onClick={() => syncQueue.processQueue()}
+                  disabled={isLoading}
+                  className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 disabled:opacity-50"
+                >
+                  {isLoading ? 'Syncing...' : 'Retry Failed'}
+                </button>
+              )}
+            </div>
+
+            {operations.length > 0 && (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {operations.map((op) => (
+                  <div 
+                    key={op.id} 
+                    className={`p-2 text-sm rounded ${
+                      op.status === 'FAILED' 
+                        ? 'bg-red-50 text-red-800' 
+                        : op.status === 'IN_PROGRESS'
+                        ? 'bg-blue-50 text-blue-800'
+                        : 'bg-gray-50 text-gray-800'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-medium capitalize">{op.table}</span>
+                        <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-black/10">
+                          {op.type}
+                        </span>
+                      </div>
+                      <span className="text-xs opacity-75">
+                        {op.status === 'PENDING' && 'Queued'}
+                        {op.status === 'IN_PROGRESS' && 'Syncing...'}
+                        {op.status === 'FAILED' && 'Failed'}
+                        {op.status === 'COMPLETED' && 'Completed'}
+                      </span>
+                    </div>
+                    {op.error && (
+                      <div className="mt-1 text-xs text-red-600 truncate" title={op.error}>
+                        {op.error}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Detailed Table Status */}
