@@ -17,6 +17,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onForgotPass
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // All user input is validated and sanitized before processing to prevent XSS/injection attacks
+  // TODO: Add further sanitization if rich text or HTML input is ever allowed
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 

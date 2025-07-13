@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Users, MapPin, Sprout, TrendingUp, DollarSign, Calendar } from 'lucide-react';
+import { useMemo } from 'react';
+import { Users, MapPin, Sprout, DollarSign } from 'lucide-react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
@@ -274,7 +274,6 @@ export function Dashboard({ farmers = [], lands = [], crops = [], transactions =
                     },
                     grid: { 
                       color: 'rgba(255, 248, 220, 0.1)',
-                      borderColor: 'rgba(255, 248, 220, 0.3)'
                     }
                   },
                   y: {
@@ -288,7 +287,6 @@ export function Dashboard({ farmers = [], lands = [], crops = [], transactions =
                     },
                     grid: { 
                       color: 'rgba(255, 248, 220, 0.1)',
-                      borderColor: 'rgba(255, 248, 220, 0.3)'
                     }
                   }
                 },

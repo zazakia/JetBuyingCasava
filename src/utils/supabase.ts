@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/supabase';
 import type { 
   SupabaseConfig, 
   Farmer, 
@@ -14,13 +15,32 @@ import type {
   SyncResult
 } from '../types';
 
-let supabaseClient: SupabaseClient | null = null;
+let supabaseClient: SupabaseClient<Database> | null = null;
+
+// Types for connection health
+type ConnectionHealth = {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message: string;
+  latency?: number;
+  lastChecked: string;
+};
+
+// Cache for connection health
+let connectionHealth: ConnectionHealth | null = null;
+let lastHealthCheck = 0;
+const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
 
 // Configuration management - Environment variables only
+// SECURITY: API keys are ONLY loaded from environment variables and NEVER stored in localStorage or persisted in the browser.
 export const getSupabaseConfig = (): SupabaseConfig => {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
   const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  
+
+  // Enforce SSL for production connections (must use https unless localhost)
+  if (url && !url.startsWith('https://') && !url.includes('localhost')) {
+    throw new Error('Supabase URL must use https:// for secure connections.');
+  }
+
   return {
     url,
     apiKey,
@@ -46,9 +66,78 @@ export const getSupabaseClient = (): SupabaseClient | null => {
 
   if (!supabaseClient) {
     try {
-      supabaseClient = createClient(config.url, config.apiKey);
+      // Create client with proper typing
+      supabaseClient = createClient<Database>(config.url, config.apiKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'agritracker-web/1.0',
+            'X-Request-Id': crypto.randomUUID()
+          }
+        }
+      });
+
+      // Add request/response monitoring using the Supabase realtime API
+      // We'll use the built-in fetch interceptor for monitoring
+      const originalFetch = globalThis.fetch;
+      
+      // Create a type-safe fetch wrapper
+      const fetchWithMonitoring = async (
+        input: RequestInfo | URL, 
+        init?: RequestInit
+      ): Promise<Response> => {
+        const url = input instanceof URL ? input.toString() : 
+                  typeof input === 'string' ? input : input.url || '';
+                  
+        const method = init?.method || 'GET';
+        const startTime = performance.now();
+        
+        console.debug('[Supabase] Request:', {
+          url,
+          method,
+          timestamp: new Date().toISOString()
+        });
+        
+        try {
+          const response = await originalFetch(input, init);
+          const responseTime = Math.round(performance.now() - startTime);
+          
+          console.debug('[Supabase] Response:', {
+            status: response.status,
+            url,
+            method,
+            responseTime: `${responseTime}ms`,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Update connection health on responses
+          if (response.status >= 200 && response.status < 300) {
+            updateConnectionHealth(true, responseTime);
+          } else {
+            updateConnectionHealth(false, undefined, `HTTP ${response.status}`);
+          }
+          
+          return response;
+        } catch (error) {
+          const responseTime = Math.round(performance.now() - startTime);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('[Supabase] Request failed:', { url, method, error: errorMessage });
+          updateConnectionHealth(false, responseTime, errorMessage);
+          throw error;
+        }
+      };
+      
+      // Override the global fetch
+      globalThis.fetch = fetchWithMonitoring;
+      
+      return supabaseClient;
     } catch (error) {
-      console.error('Failed to create Supabase client:', error);
+      console.error('[Supabase] Failed to create client:', error);
+      updateConnectionHealth(false, undefined, error instanceof Error ? error.message : 'Unknown error');
       return null;
     }
   }
@@ -56,24 +145,139 @@ export const getSupabaseClient = (): SupabaseClient | null => {
   return supabaseClient;
 };
 
-// Test connection
-export const testConnection = async (): Promise<{ success: boolean; message: string }> => {
-  const client = getSupabaseClient();
+// Update connection health based on the latest request/response
+const updateConnectionHealth = (
+  success: boolean,
+  latency?: number,
+  errorMessage?: string
+): void => {
+  const now = Date.now();
+  const lastChecked = new Date(now).toISOString();
   
-  if (!client) {
-    return { success: false, message: 'Supabase not configured' };
+  if (success) {
+    const status = latency && latency > 1000 ? 'degraded' : 'healthy';
+    connectionHealth = {
+      status,
+      message: status === 'healthy' 
+        ? 'Connection is healthy' 
+        : `High latency: ${latency}ms`,
+      latency,
+      lastChecked
+    };
+  } else {
+    connectionHealth = {
+      status: 'unhealthy',
+      message: errorMessage || 'Connection failed',
+      lastChecked
+    };
   }
+  
+  lastHealthCheck = now;
+};
 
+/**
+ * Check the health of the database connection
+ * @param force Force a new health check even if the last one was recent
+ * @returns Promise with connection health status
+ */
+export const checkConnectionHealth = async (force = false): Promise<ConnectionHealth> => {
+  const now = Date.now();
+  
+  // Return cached health if it's still fresh
+  if (!force && connectionHealth && (now - lastHealthCheck) < HEALTH_CHECK_INTERVAL) {
+    return connectionHealth;
+  }
+  
+  const client = getSupabaseClient();
+  if (!client) {
+    connectionHealth = {
+      status: 'unhealthy',
+      message: 'Supabase client not initialized',
+      lastChecked: new Date().toISOString()
+    };
+    return connectionHealth;
+  }
+  
   try {
-    const { data, error } = await client.from('jetagritracker.farmers').select('count', { count: 'exact', head: true });
+    const startTime = performance.now();
+    
+    // Use a lightweight query to test the connection
+    // Use a type-safe query with the correct schema
+    const { error } = await client
+      .from('farmers')
+      .select('id')
+      .limit(1)
+      .maybeSingle();
+    
+    const latency = Math.round(performance.now() - startTime);
     
     if (error) {
-      return { success: false, message: error.message };
+      // No rows is actually a successful connection
+      if (error.code === 'PGRST116') {
+        updateConnectionHealth(true, latency);
+      } else {
+        updateConnectionHealth(false, undefined, `Database error: ${error.message}`);
+      }
+    } else {
+      updateConnectionHealth(true, latency);
+    }
+  } catch (error) {
+    updateConnectionHealth(
+      false, 
+      undefined, 
+      `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+  
+  return connectionHealth!;
+};
+
+// Test connection with retry logic
+export const testConnection = async (maxRetries = 2): Promise<{ success: boolean; message: string; latency?: number }> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      const health = await checkConnectionHealth(true);
+      
+      if (health.status === 'healthy' || health.status === 'degraded') {
+        return { 
+          success: true, 
+          message: health.message,
+          latency: health.latency
+        };
+      }
+      
+      lastError = new Error(health.message);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error during connection test');
     }
     
-    return { success: true, message: 'Connection successful' };
+    // If not the last attempt, wait before retrying
+    if (attempt <= maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+    }
+  }
+  
+  return { 
+    success: false, 
+    message: `Connection failed after ${maxRetries + 1} attempts: ${lastError?.message}` 
+  };
+};
+
+// Legacy testConnection - now a wrapper around the new implementation
+export const testConnectionLegacy = async (): Promise<{ success: boolean; message: string }> => {
+  try {
+    const result = await checkConnectionHealth(true);
+    return {
+      success: result.status !== 'unhealthy',
+      message: result.message,
+    };
   } catch (error) {
-    return { success: false, message: 'Connection failed' };
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Connection test failed',
+    };
   }
 };
 
@@ -201,6 +405,8 @@ const transformTransactionToDB = (transaction: Transaction): Omit<TransactionDB,
 });
 
 // Offline support utilities
+// SECURITY: Only non-sensitive, non-auth data is stored in offline_actions. No API keys or user credentials are ever stored here.
+// TODO: Implement client-side encryption for offline_actions in the future for additional security.
 const getOfflineActions = (): OfflineAction[] => {
   const actions = localStorage.getItem('offline_actions');
   return actions ? JSON.parse(actions) : [];
@@ -217,7 +423,11 @@ const removeOfflineAction = (actionId: string): void => {
   localStorage.setItem('offline_actions', JSON.stringify(actions));
 };
 
+// Use crypto.randomUUID() for secure, collision-resistant IDs if available
 const generateId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
   return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 

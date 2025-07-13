@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, Clock, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 

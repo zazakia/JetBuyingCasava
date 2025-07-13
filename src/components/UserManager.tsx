@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, 
-  Plus, 
-  Search, 
   Edit, 
-  Trash2, 
+  Search, 
   Shield, 
   ShieldCheck, 
   ShieldOff,
@@ -17,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getSupabaseClient } from '../utils/supabase';
-import type { User, UserProfile } from '../types';
+import type { User } from '../types';
 
 export const UserManager: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -38,20 +36,8 @@ export const UserManager: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const transformUserProfile = (profile: UserProfile, authUser: any): User => ({
-    id: profile.user_id,
-    email: authUser.email,
-    firstName: profile.first_name || '',
-    lastName: profile.last_name || '',
-    role: profile.role,
-    isActive: profile.is_active,
-    profilePicture: profile.profile_picture,
-    phone: profile.phone,
-    organization: profile.organization,
-    createdAt: profile.created_at,
-    lastLoginAt: profile.last_login_at
-  });
-
+  // Authorization checks are performed before any sensitive operation
+  // TODO: Improve role-based access control for finer-grained permissions
   const fetchUsers = async () => {
     if (!client || (!isAdmin && !isManager)) {
       setError('Access denied. Only admins and managers can view users.');
@@ -94,6 +80,8 @@ export const UserManager: React.FC = () => {
     }
   };
 
+  // Authorization checks are performed before any sensitive operation
+  // TODO: Improve role-based access control for finer-grained permissions
   const updateUserRole = async (userId: string, newRole: 'admin' | 'manager' | 'user') => {
     if (!client || !isAdmin) {
       setError('Only admins can change user roles');
@@ -184,8 +172,8 @@ export const UserManager: React.FC = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.organization?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -352,7 +340,7 @@ export const UserManager: React.FC = () => {
                             ) : (
                               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center">
                                 <span className="text-white font-medium">
-                                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                                  {user.firstName?.charAt(0) ?? ''}{user.lastName?.charAt(0) ?? ''}
                                 </span>
                               </div>
                             )}

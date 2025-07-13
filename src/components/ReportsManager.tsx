@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { FileText, Download, Calendar, TrendingUp, Users, MapPin } from 'lucide-react';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { useState, useMemo } from 'react';
+import { Download, TrendingUp, Users } from 'lucide-react';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';
 
 interface ReportsManagerProps {

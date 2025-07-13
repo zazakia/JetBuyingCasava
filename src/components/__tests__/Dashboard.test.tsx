@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import { customRender, mockFarmers, mockLands, mockCrops, mockTransactions } from '../../test/utils'
 import { Dashboard } from '../Dashboard'

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Palette, Circle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 

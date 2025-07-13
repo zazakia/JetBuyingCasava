@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import type { Farmer, Land, Crop, Transaction } from '../types'
+import userEvent from '@testing-library/user-event';
 
 // Mock data for testing
 export const mockFarmers: Farmer[] = [

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Database, Download, Upload, Trash2, Save, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { User, Bell, Database, Download, Upload, Trash2, Save, RefreshCw } from 'lucide-react';
 import { SyncStatus } from './SyncStatus';
 
 interface SettingsManagerProps {}

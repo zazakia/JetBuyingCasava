@@ -166,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const { data, error } = await client.auth.signInWithPassword({
+      const { error } = await client.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password
       });
@@ -277,23 +277,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const updateData = {
-        first_name: profileData.firstName,
-        last_name: profileData.lastName,
-        phone: profileData.phone,
-        organization: profileData.organization,
-        profile_picture: profileData.profilePicture,
-        role: profileData.role,
-        is_active: profileData.isActive
-      };
-
-      // Remove undefined values
       const { error } = await client
         .from('members')
         .update({
           name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
           email: user.email,
-          role: profileData.role || 'member',
+          role: profileData.role,
           status: profileData.isActive ? 'active' : 'inactive'
         })
         .eq('user_id', user.id)

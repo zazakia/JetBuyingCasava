@@ -1,17 +1,48 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
-import { customRender, mockFarmers, fillFormField, clickButton, userEvent } from '../../test/utils'
+import { customRender, mockFarmers, userEvent } from '../../test/utils'
 import { FarmersManager } from '../FarmersManager'
-import type { Farmer } from '../../types'
 
 describe('FarmersManager', () => {
   const mockOnAddFarmer = vi.fn()
   const mockOnUpdateFarmer = vi.fn()
+  const mockOnDeleteFarmer = vi.fn()
+
+  const mockLands = [
+    {
+      id: 'land-1',
+      farmerId: 'farmer-1',
+      name: 'Land 1',
+      area: 1.5,
+      location: 'Location 1',
+      barangay: 'Barangay 1',
+      municipality: 'Municipality 1',
+      province: 'Province 1',
+      soilType: 'Loam',
+      dateAcquired: '2022-01-01',
+      coordinates: { lat: 10.0, lng: 123.0 },
+    },
+    {
+      id: 'land-2',
+      farmerId: 'farmer-2',
+      name: 'Land 2',
+      area: 2.0,
+      location: 'Location 2',
+      barangay: 'Barangay 2',
+      municipality: 'Municipality 2',
+      province: 'Province 2',
+      soilType: 'Clay',
+      dateAcquired: '2022-02-01',
+      coordinates: { lat: 11.0, lng: 124.0 },
+    },
+  ];
 
   const defaultProps = {
     farmers: mockFarmers,
+    lands: mockLands,
     onAddFarmer: mockOnAddFarmer,
     onUpdateFarmer: mockOnUpdateFarmer,
+    onDeleteFarmer: mockOnDeleteFarmer,
   }
 
   beforeEach(() => {
@@ -209,7 +240,7 @@ describe('FarmersManager', () => {
 
   describe('Empty State', () => {
     it('handles empty farmers list', () => {
-      customRender(<FarmersManager {...{ ...defaultProps, farmers: [] }} />)
+      customRender(<FarmersManager {...{ ...defaultProps, farmers: [], lands: mockLands, onDeleteFarmer: mockOnDeleteFarmer }} />)
       
       expect(screen.getByText('Farmers Management')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /add farmer/i })).toBeInTheDocument()

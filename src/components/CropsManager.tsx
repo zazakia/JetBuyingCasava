@@ -17,7 +17,20 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
   const [filterBarangay, setFilterBarangay] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCrop, setEditingCrop] = useState<Crop | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    farmerId: string;
+    landId: string;
+    cropType: string;
+    variety: string;
+    plantingDate: string;
+    expectedHarvestDate: string;
+    actualHarvestDate: string;
+    areaPlanted: number;
+    expectedYield: number;
+    actualYield: number;
+    status: 'planted' | 'growing' | 'ready' | 'harvested';
+    notes: string;
+  }>({
     farmerId: '',
     landId: '',
     cropType: '',
@@ -28,7 +41,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
     areaPlanted: 0,
     expectedYield: 0,
     actualYield: 0,
-    status: 'planted' as const,
+    status: 'planted',
     notes: ''
   });
 
@@ -36,7 +49,6 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
 
   const filteredCrops = (crops || []).filter(crop => {
     const farmer = (farmers || []).find(f => f.id === crop.farmerId);
-    const land = (lands || []).find(l => l.id === crop.landId);
     
     const matchesSearch = 
       crop.cropType.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -179,7 +191,6 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {filteredCrops.map(crop => {
           const farmer = (farmers || []).find(f => f.id === crop.farmerId);
-          const land = (lands || []).find(l => l.id === crop.landId);
           
           return (
             <div key={crop.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
@@ -210,7 +221,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
                 <div className="flex items-center text-gray-600">
                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="text-xs lg:text-sm truncate">
-                    {farmer?.firstName} {farmer?.lastName} - {land?.name}
+                    {farmer?.firstName} {farmer?.lastName} - {(lands.find(l => l.id === crop.landId)?.name || '')}
                   </span>
                 </div>
                 <div className="flex items-center text-gray-600">
@@ -364,7 +375,7 @@ export function CropsManager({ crops, farmers, lands, onAddCrop, onUpdateCrop }:
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                      onChange={(e) => setFormData({...formData, status: e.target.value as 'planted' | 'growing' | 'ready' | 'harvested'})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm lg:text-base"
                     >
                       <option value="planted">Planted</option>

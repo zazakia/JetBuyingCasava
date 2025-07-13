@@ -1,41 +1,50 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, DollarSign, Calendar, Package, TrendingUp, Loader } from 'lucide-react';
-import type { Transaction, Farmer, Crop, LoadingState } from '../types';
+import { Plus, Search, Edit2, DollarSign, Calendar, Package, TrendingUp } from 'lucide-react';
+import type { Transaction, Farmer } from '../types';
 
 interface TransactionsManagerProps {
   transactions: Transaction[];
   farmers: Farmer[];
-  crops: Crop[];
   onAddTransaction: (transaction: Transaction) => void;
   onUpdateTransaction: (transaction: Transaction) => void;
-  loading?: LoadingState;
 }
 
 export function TransactionsManager({ 
   transactions, 
   farmers, 
-  crops, 
   onAddTransaction, 
-  onUpdateTransaction,
-  loading 
+  onUpdateTransaction
 }: TransactionsManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    farmerId: string;
+    cropId: string;
+    type: 'purchase' | 'sale';
+    buyerSeller: string;
+    produce: string;
+    quantity: number;
+    pricePerKg: number;
+    totalAmount: number;
+    transactionDate: string;
+    paymentStatus: 'pending' | 'partial' | 'paid';
+    deliveryStatus: 'pending' | 'delivered';
+    notes: string;
+  }>({
     farmerId: '',
     cropId: '',
-    type: 'sale' as const,
+    type: 'sale',
     buyerSeller: '',
     produce: '',
     quantity: 0,
     pricePerKg: 0,
     totalAmount: 0,
     transactionDate: '',
-    paymentStatus: 'pending' as const,
-    deliveryStatus: 'pending' as const,
+    paymentStatus: 'pending',
+    deliveryStatus: 'pending',
     notes: ''
   });
 

@@ -110,8 +110,7 @@ export const getAllUsers = async (): Promise<User[]> => {
 
 // Create user profile (used by auth trigger)
 export const createUserProfile = async (
-  userId: string, 
-  email: string,
+  userId: string,
   userData: {
     firstName?: string;
     lastName?: string;
@@ -150,8 +149,7 @@ export const createUserProfile = async (
 // Check if user has permission for a specific action
 export const hasPermission = (
   user: User | null, 
-  action: 'read' | 'write' | 'delete' | 'admin',
-  resource?: string
+  action: 'read' | 'write' | 'delete' | 'admin'
 ): boolean => {
   if (!user || !user.isActive) return false;
 
@@ -247,11 +245,11 @@ export const getUserStatistics = async (): Promise<{
 };
 
 // Promote user to admin (system function)
-export const promoteToAdmin = async (email: string): Promise<boolean> => {
+export const promoteToAdmin = async (): Promise<boolean> => {
   if (!client) return false;
 
   try {
-    const { error } = await client.rpc('create_admin_user', { admin_email: email });
+    const { error } = await client.rpc('create_admin_user', {});
 
     if (error) {
       console.error('Error promoting user to admin:', error);

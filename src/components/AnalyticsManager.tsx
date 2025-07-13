@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, BarChart3, Target, Calendar } from 'lucide-react';
 import { Line, Scatter, Bar } from 'react-chartjs-2';
 import type { Farmer, Land, Crop, Transaction } from '../types';

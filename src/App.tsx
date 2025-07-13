@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -236,11 +236,6 @@ function App() {
     error: null,
     lastUpdated: null
   });
-  const [transactionsLoading, setTransactionsLoading] = useState<LoadingState>({
-    isLoading: true,
-    error: null,
-    lastUpdated: null
-  });
   
   // Sync status
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(getSyncStatus());
@@ -269,7 +264,6 @@ function App() {
           setFarmersLoading({ isLoading: false, error: null, lastUpdated: new Date().toISOString() });
           setLandsLoading({ isLoading: false, error: null, lastUpdated: new Date().toISOString() });
           setCropsLoading({ isLoading: false, error: null, lastUpdated: new Date().toISOString() });
-          setTransactionsLoading({ isLoading: false, error: null, lastUpdated: new Date().toISOString() });
         } else {
           console.log('Loading data from Supabase...');
           // Load local data first for immediate display
@@ -290,15 +284,6 @@ function App() {
           setFarmersLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
           setLandsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
           setCropsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
-          setTransactionsLoading({ isLoading: !hasLocalData, error: null, lastUpdated: timestamp });
-          
-          // Only sync if we don't have local data or in background
-          if (!hasLocalData) {
-            await loadAllData();
-          } else {
-            // Background sync if we have local data
-            setTimeout(() => loadAllData(), 1000);
-          }
         }
         
         console.log('App initialization complete');
@@ -313,7 +298,6 @@ function App() {
         setFarmersLoading(errorState);
         setLandsLoading(errorState);
         setCropsLoading(errorState);
-        setTransactionsLoading(errorState);
       } finally {
         setIsInitializing(false);
       }
@@ -365,11 +349,6 @@ function App() {
 
       const transactionsResult = await syncTransactions();
       setTransactions(transactionsResult.data);
-      setTransactionsLoading({
-        isLoading: transactionsResult.isLoading,
-        error: transactionsResult.error,
-        lastUpdated: transactionsResult.lastUpdated
-      });
     } catch (error) {
       console.error('Failed to load data:', error);
       // Set error states for all loading states
@@ -381,7 +360,6 @@ function App() {
       setFarmersLoading(errorState);
       setLandsLoading(errorState);
       setCropsLoading(errorState);
-      setTransactionsLoading(errorState);
     }
   };
 
@@ -543,54 +521,28 @@ function App() {
   };
 
   const addTransaction = async (transaction: Transaction) => {
-    setTransactionsLoading(prev => ({ ...prev, isLoading: true }));
-    
     try {
       const response = await transactionOperations.create(transaction);
-      
       if (response.data) {
         const updatedTransactions = [...transactions, response.data];
         setTransactions(updatedTransactions);
         updateLocalTransactions(updatedTransactions);
       }
-      
-      setTransactionsLoading({
-        isLoading: false,
-        error: response.error,
-        lastUpdated: new Date().toISOString()
-      });
     } catch (error) {
-      setTransactionsLoading({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to add transaction',
-        lastUpdated: null
-      });
+      console.error('Failed to add transaction:', error);
     }
   };
 
   const updateTransaction = async (transaction: Transaction) => {
-    setTransactionsLoading(prev => ({ ...prev, isLoading: true }));
-    
     try {
       const response = await transactionOperations.update(transaction.id, transaction);
-      
       if (response.data) {
         const updatedTransactions = transactions.map(t => t.id === transaction.id ? response.data! : t);
         setTransactions(updatedTransactions);
         updateLocalTransactions(updatedTransactions);
       }
-      
-      setTransactionsLoading({
-        isLoading: false,
-        error: response.error,
-        lastUpdated: new Date().toISOString()
-      });
     } catch (error) {
-      setTransactionsLoading({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to update transaction',
-        lastUpdated: null
-      });
+      console.error('Failed to update transaction:', error);
     }
   };
 
@@ -653,10 +605,8 @@ function App() {
           <TransactionsManager
             transactions={transactions || []}
             farmers={farmers || []}
-            crops={crops || []}
             onAddTransaction={addTransaction}
             onUpdateTransaction={updateTransaction}
-            loading={transactionsLoading}
           />
         );
       case 'reports':
