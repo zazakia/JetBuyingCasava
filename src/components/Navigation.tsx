@@ -53,6 +53,7 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
   // Add user management for admins and managers
   const adminMenuItems = [
     { id: 'users', label: 'User Management', icon: Shield, emoji: '👥' },
+    { id: 'admin', label: 'Admin', icon: Shield, emoji: '🛡️' },
   ];
 
   const menuItems = [
@@ -72,7 +73,9 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
   };
 
   return (
-    <nav className="glass-nav h-full flex flex-col">
+    <nav
+      className={`flex flex-col h-full bg-glass border-r border-amber-200/30 shadow-lg overflow-y-auto max-h-screen`}
+    >
       <div className="p-6">
         <div className="flex items-center space-x-3 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center animate-glow relative">
@@ -164,59 +167,6 @@ export function Navigation({ activeTab, onTabChange, syncStatus, onMobileMenuClo
             );
           })}
         </ul>
-        
-        {/* Enhanced Sync Status */}
-        <div className="mt-4">
-          <SyncStatusComponent className="bg-white/5 border-white/10" />
-        </div>
-
-        {/* User Profile Section */}
-        <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg">
-          <div className="flex items-center space-x-3 mb-3">
-            {user?.profilePicture ? (
-              <img 
-                src={user.profilePicture} 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center">
-                <UserCircle className="w-6 h-6 text-white" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-glass-muted truncate">
-                {user?.email}
-              </p>
-              <div className="flex items-center space-x-1 mt-1">
-                <Shield className="w-3 h-3 text-amber-400" />
-                <span className="text-xs text-amber-400 capitalize">
-                  {user?.role}
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-red-300 hover:text-red-200 hover:bg-red-900/20 rounded-lg transition-colors text-sm"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </div>
-      
-      {/* Mobile Close Button */}
-      <div className="lg:hidden p-4 border-t border-white/20">
-        <button
-          onClick={onMobileMenuClose}
-          className="w-full flex items-center justify-center px-4 py-2 text-glass-muted hover:text-glass hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <span className="text-sm font-medium">Close Menu</span>
-        </button>
       </div>
     </nav>
   );

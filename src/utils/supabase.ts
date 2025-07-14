@@ -464,7 +464,7 @@ const createRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(`jetagritracker.${table}`)
+      .from(`cassavajet.${table}`)
       .insert(dbData)
       .select()
       .single();
@@ -530,7 +530,7 @@ const updateRecord = async <T, TDB>(
   try {
     const dbData = transformer(data);
     const { data: result, error } = await client
-      .from(`jetagritracker.${table}`)
+      .from(`cassavajet.${table}`)
       .update(dbData)
       .eq('id', id)
       .select()
@@ -589,7 +589,7 @@ const deleteRecord = async (table: string, id: string): Promise<ApiResponse<bool
 
   try {
     const { error } = await client
-      .from(`jetagritracker.${table}`)
+      .from(`cassavajet.${table}`)
       .delete()
       .eq('id', id);
 
@@ -638,7 +638,7 @@ const fetchRecords = async <T, TDB>(
 
   try {
     const { data, error } = await client
-      .from(`jetagritracker.${table}`)
+      .from(`cassavajet.${table}`)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -669,7 +669,7 @@ export const farmerOperations = {
       // Add to sync queue and get operation ID
       const operationId = await syncQueue.addOperation({
         type: 'CREATE',
-        table: 'farmers',
+        table: 'jetbuyingcasava_farmers',
         data: farmer,
       });
       return {
@@ -679,7 +679,7 @@ export const farmerOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return createRecord<Farmer, FarmerDB>('farmers', farmer, transformFarmerToDB, transformFarmerFromDB);
+    return createRecord<Farmer, FarmerDB>('jetbuyingcasava_farmers', farmer, transformFarmerToDB, transformFarmerFromDB);
   },
   
   update: async (id: string, farmer: Farmer) => {
@@ -689,7 +689,7 @@ export const farmerOperations = {
       // Add to sync queue and get operation ID
       await syncQueue.addOperation({
         type: 'UPDATE',
-        table: 'farmers',
+        table: 'jetbuyingcasava_farmers',
         data: { ...farmer, id },
       });
       return {
@@ -699,7 +699,7 @@ export const farmerOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return updateRecord<Farmer, FarmerDB>('farmers', id, farmer, transformFarmerToDB, transformFarmerFromDB);
+    return updateRecord<Farmer, FarmerDB>('jetbuyingcasava_farmers', id, farmer, transformFarmerToDB, transformFarmerFromDB);
   },
   
   delete: async (id: string) => {
@@ -709,7 +709,7 @@ export const farmerOperations = {
       // Add to sync queue and get operation ID
       await syncQueue.addOperation({
         type: 'DELETE',
-        table: 'farmers',
+        table: 'jetbuyingcasava_farmers',
         data: { id },
       });
       return {
@@ -744,7 +744,7 @@ export const landOperations = {
     if (!supabase) {
       const operationId = await syncQueue.addOperation({
         type: 'CREATE',
-        table: 'lands',
+        table: 'jetbuyingcasava_lands',
         data: land,
       });
       return {
@@ -754,7 +754,7 @@ export const landOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return createRecord<Land, LandDB>('lands', land, transformLandToDB, transformLandFromDB);
+    return createRecord<Land, LandDB>('jetbuyingcasava_lands', land, transformLandToDB, transformLandFromDB);
   },
   
   update: async (id: string, land: Land) => {
@@ -762,7 +762,7 @@ export const landOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'UPDATE',
-        table: 'lands',
+        table: 'jetbuyingcasava_lands',
         data: { ...land, id },
       });
       return {
@@ -772,7 +772,7 @@ export const landOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return updateRecord<Land, LandDB>('lands', id, land, transformLandToDB, transformLandFromDB);
+    return updateRecord<Land, LandDB>('jetbuyingcasava_lands', id, land, transformLandToDB, transformLandFromDB);
   },
   
   delete: async (id: string) => {
@@ -780,7 +780,7 @@ export const landOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'DELETE',
-        table: 'lands',
+        table: 'jetbuyingcasava_lands',
         data: { id },
       });
       return {
@@ -790,21 +790,15 @@ export const landOperations = {
         statusText: 'Delete queued for sync',
       };
     }
-    return deleteRecord('lands', id);
+    return deleteRecord('jetbuyingcasava_lands', id);
   },
   
   fetchAll: async () => {
     const supabase = getSupabaseClient();
     if (!supabase) {
-      const localLands = JSON.parse(localStorage.getItem('lands') || '[]');
-      return {
-        data: localLands,
-        error: null,
-        status: 200,
-        statusText: 'OK (offline)',
-      };
+      return { data: [], error: new Error('Offline mode: No data available'), status: 0, statusText: 'Offline' };
     }
-    return fetchRecords<Land, LandDB>('lands', transformLandFromDB);
+    return fetchRecords<Land, LandDB>('jetbuyingcasava_lands', transformLandFromDB);
   }
 };
 
@@ -814,7 +808,7 @@ export const cropOperations = {
     if (!supabase) {
       const operationId = await syncQueue.addOperation({
         type: 'CREATE',
-        table: 'crops',
+        table: 'jetbuyingcasava_crops',
         data: crop,
       });
       return {
@@ -824,7 +818,7 @@ export const cropOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return createRecord<Crop, CropDB>('crops', crop, transformCropToDB, transformCropFromDB);
+    return createRecord<Crop, CropDB>('jetbuyingcasava_crops', crop, transformCropToDB, transformCropFromDB);
   },
   
   update: async (id: string, crop: Crop) => {
@@ -832,7 +826,7 @@ export const cropOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'UPDATE',
-        table: 'crops',
+        table: 'jetbuyingcasava_crops',
         data: { ...crop, id },
       });
       return {
@@ -842,7 +836,7 @@ export const cropOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return updateRecord<Crop, CropDB>('crops', id, crop, transformCropToDB, transformCropFromDB);
+    return updateRecord<Crop, CropDB>('jetbuyingcasava_crops', id, crop, transformCropToDB, transformCropFromDB);
   },
   
   delete: async (id: string) => {
@@ -850,7 +844,7 @@ export const cropOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'DELETE',
-        table: 'crops',
+        table: 'jetbuyingcasava_crops',
         data: { id },
       });
       return {
@@ -860,21 +854,15 @@ export const cropOperations = {
         statusText: 'Delete queued for sync',
       };
     }
-    return deleteRecord('crops', id);
+    return deleteRecord('jetbuyingcasava_crops', id);
   },
   
   fetchAll: async () => {
     const supabase = getSupabaseClient();
     if (!supabase) {
-      const localCrops = JSON.parse(localStorage.getItem('crops') || '[]');
-      return {
-        data: localCrops,
-        error: null,
-        status: 200,
-        statusText: 'OK (offline)',
-      };
+      return { data: [], error: new Error('Offline mode: No data available'), status: 0, statusText: 'Offline' };
     }
-    return fetchRecords<Crop, CropDB>('crops', transformCropFromDB);
+    return fetchRecords<Crop, CropDB>('jetbuyingcasava_crops', transformCropFromDB);
   }
 };
 
@@ -884,7 +872,7 @@ export const transactionOperations = {
     if (!supabase) {
       const operationId = await syncQueue.addOperation({
         type: 'CREATE',
-        table: 'transactions',
+        table: 'jetbuyingcasava_transactions',
         data: transaction,
       });
       return {
@@ -894,7 +882,7 @@ export const transactionOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return createRecord<Transaction, TransactionDB>('transactions', transaction, transformTransactionToDB, transformTransactionFromDB);
+    return createRecord<Transaction, TransactionDB>('jetbuyingcasava_transactions', transaction, transformTransactionToDB, transformTransactionFromDB);
   },
   
   update: async (id: string, transaction: Transaction) => {
@@ -902,7 +890,7 @@ export const transactionOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'UPDATE',
-        table: 'transactions',
+        table: 'jetbuyingcasava_transactions',
         data: { ...transaction, id },
       });
       return {
@@ -912,7 +900,7 @@ export const transactionOperations = {
         statusText: 'Queued for sync',
       };
     }
-    return updateRecord<Transaction, TransactionDB>('transactions', id, transaction, transformTransactionToDB, transformTransactionFromDB);
+    return updateRecord<Transaction, TransactionDB>('jetbuyingcasava_transactions', id, transaction, transformTransactionToDB, transformTransactionFromDB);
   },
   
   delete: async (id: string) => {
@@ -920,7 +908,7 @@ export const transactionOperations = {
     if (!supabase) {
       await syncQueue.addOperation({
         type: 'DELETE',
-        table: 'transactions',
+        table: 'jetbuyingcasava_transactions',
         data: { id },
       });
       return {
@@ -930,21 +918,15 @@ export const transactionOperations = {
         statusText: 'Delete queued for sync',
       };
     }
-    return deleteRecord('transactions', id);
+    return deleteRecord('jetbuyingcasava_transactions', id);
   },
   
   fetchAll: async () => {
     const supabase = getSupabaseClient();
     if (!supabase) {
-      const localTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-      return {
-        data: localTransactions,
-        error: null,
-        status: 200,
-        statusText: 'OK (offline)',
-      };
+      return { data: [], error: new Error('Offline mode: No data available'), status: 0, statusText: 'Offline' };
     }
-    return fetchRecords<Transaction, TransactionDB>('transactions', transformTransactionFromDB);
+    return fetchRecords<Transaction, TransactionDB>('jetbuyingcasava_transactions', transformTransactionFromDB);
   }
 };
 
@@ -985,7 +967,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         }
 
         const dbData = transformer(action.data);
-        const { error } = await client.from(`jetagritracker.${table}`).insert(dbData);
+        const { error } = await client.from(`cassavajet.${table}`).insert(dbData);
         
         if (error) throw error;
         
@@ -1012,7 +994,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
 
         const dbData = transformer(action.data);
         const { error } = await client
-          .from(`jetagritracker.${table}`)
+          .from(`cassavajet.${table}`)
           .update(dbData)
           .eq('id', action.data.id);
         
@@ -1020,7 +1002,7 @@ export const syncOfflineActions = async (): Promise<SyncResult> => {
         
       } else if (action.type === 'DELETE') {
         const { error } = await client
-          .from(`jetagritracker.${action.table}`)
+          .from(`cassavajet.${action.table}`)
           .delete()
           .eq('id', action.data.id);
         

@@ -45,15 +45,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastLoginAt: profile?.last_login_at || supabaseUser.last_sign_in_at
   });
 
-  // Fetch user profile from members table
+  // Fetch user profile from the users table in the new schema
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     if (!client) return null;
 
     try {
       const { data, error } = await client
-        .from('members')
+        .from('jetbuyingcasava_users')  // Updated table name
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)  // Assuming id is the primary key
         .single();
 
       if (error) {
@@ -61,20 +61,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      // Transform members table data to UserProfile format
+      // Transform user data to UserProfile format
       const profile: UserProfile = {
         id: data.id,
-        user_id: data.user_id,
-        first_name: data.name?.split(' ')[0] || '',
-        last_name: data.name?.split(' ')[1] || '',
-        role: data.role === 'admin' ? 'admin' : data.role === 'manager' ? 'manager' : 'user',
-        is_active: data.status === 'active' || data.status === 'pending',
-        profile_picture: undefined,
-        phone: undefined,
-        organization: undefined,
+        user_id: data.id,  // Assuming id is the same as user_id in the new schema
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        role: data.role || 'user',
+        is_active: data.is_active ?? true,
+        profile_picture: data.profile_picture,
+        phone: data.phone,
+        organization: data.organization,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        last_login_at: undefined
+        last_login_at: data.last_sign_in_at
       };
 
       return profile;
@@ -314,14 +314,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const { error } = await client
-        .from('members')
+        .from('jetbuyingcasava_users')
         .update({
-          name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+          first_name: profileData.firstName,
+          last_name: profileData.lastName,
           email: user.email,
           role: profileData.role,
-          status: profileData.isActive ? 'active' : 'inactive'
+          is_active: profileData.isActive,
+          phone: profileData.phone,
+          organization: profileData.organization,
+          updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .select()
         .single();
 

@@ -82,7 +82,7 @@ export function SyncStatus({ className = '', showDetails = false }: SyncStatusPr
       }
 
       const { data, error } = await client
-        .from('JetAgriTracker.sync_status_view')
+        .from('cassavajet.sync_status_view')
         .select('*');
 
       if (error) {
@@ -332,9 +332,6 @@ export function SyncStatus({ className = '', showDetails = false }: SyncStatusPr
       {syncData.length === 0 && !isLoading && (
         <div className="p-4 text-center text-gray-500">
           <div className="text-sm">No sync data available</div>
-          {!isOnline && (
-            <div className="text-xs mt-1">Connect to internet to view sync status</div>
-          )}
         </div>
       )}
     </div>
